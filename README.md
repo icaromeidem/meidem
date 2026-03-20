@@ -1,6 +1,9 @@
-# MEIDEM
+#
+<p align="center">
+  <img src="logo/meidem2.png" alt="MEIDEM logo" width="430"/>
+</p>
 
-**Multi-grid Exoplanet Interpolator for limb DarkEning Models**
+# MEIDEM - Multi-grid Exoplanet Interpolator for limb DarkEning Models
 
 [![PyPI version](https://badge.fury.io/py/meidem.svg)](https://badge.fury.io/py/meidem)
 [![Python](https://img.shields.io/pypi/pyversions/meidem)](https://pypi.org/project/meidem/)
@@ -12,7 +15,7 @@ All grid tables are **bundled with the package**: no manual downloads, no VizieR
 
 ---
 
-## What is Limb Darkening?
+## What is Stellar Limb Darkening?
 
 When a planet transits its host star, the transit light curve is not only shaped by the planet's size and orbital geometry — it is also strongly affected by how the stellar brightness varies across the disk. Stars are not uniformly bright: they are brighter at the center and dimmer toward the edge (the "limb"). This effect, called **limb darkening**, must be correctly accounted for to accurately determine the planetary radius and other transit parameters.
 
@@ -61,33 +64,33 @@ import meidem
 # Teff = 5772 K  (Prša et al. 2016, AJ 152, 41)
 # logg = 4.438   (log10 of GM_sun / R_sun^2 in cgs)
 # [Fe/H] = 0.0   (by definition)
-SOL = dict(teff=5772, logg=4.438, feh=0.0)
+SUN = dict(teff=5772, logg=4.438, feh=0.0)
 
 print("LD coefficients for the Sun (IAU 2015)\n")
 
 # Kostogryz+2022 — power-2 for TESS
-r = meidem.get_ld_coefficients(**SOL, passband='TESS',
+r = meidem.get_ld_coefficients(**SUN, passband='TESS',
                                 grid='kostogryz2022', law='power2')
 print(f"Kostogryz+2022  power-2    TESS   : {r['coefficients']}")
 # Expected: [c ≈ 0.65, alpha ≈ 0.60]
 
 # Kostogryz+2022 — nonlinear (4-coeff) for TESS
-r = meidem.get_ld_coefficients(**SOL, passband='TESS',
+r = meidem.get_ld_coefficients(**SUN, passband='TESS',
                                 grid='kostogryz2022', law='nonlinear')
 print(f"Kostogryz+2022  nonlinear  TESS   : {r['coefficients']}")
 
 # Claret & Southworth 2022 — power-2 for TESS
-r = meidem.get_ld_coefficients(**SOL, passband='TESS', grid='claret2022')
+r = meidem.get_ld_coefficients(**SUN, passband='TESS', grid='claret2022')
 print(f"Claret2022      power-2    TESS   : {r['coefficients']}")
 
 # Claret 2017 — quadratic for TESS, ATLAS model, Least-Squares
-r = meidem.get_ld_coefficients(**SOL, passband='TESS',
+r = meidem.get_ld_coefficients(**SUN, passband='TESS',
                                 grid='claret2017', law='quadratic',
                                 mod='A', met='L')
 print(f"Claret2017      quadratic  TESS   : {r['coefficients']}")
 
 # Claret & Bloemen 2011 — quadratic for Kepler
-r = meidem.get_ld_coefficients(**SOL, passband='Kp',
+r = meidem.get_ld_coefficients(**SUN, passband='Kp',
                                 grid='claret2011', law='quadratic')
 print(f"Claret2011      quadratic  Kepler : {r['coefficients']}")
 ```
