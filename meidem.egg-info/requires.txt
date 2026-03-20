@@ -1,0 +1,16 @@
+numpy>=1.21
+pandas>=1.5
+scipy>=1.8
+pyarrow>=12.0
+
+[dev]
+pytest>=7.0
+pytest-cov
+ruff
+build
+twine
+
+[docs]
+mkdocs
+mkdocs-material
+mkdocstrings[python]
