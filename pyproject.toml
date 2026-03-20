@@ -1,0 +1,72 @@
+[build-system]
+requires      = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name        = "meidem"
+version     = "0.1.0"
+description = "Multi-grid Exoplanet Interpolator for limb DarkEning Models"
+readme      = "README.md"
+license     = { file = "LICENSE" }
+requires-python = ">=3.9"
+
+authors = [
+    { name = "Icaro Meidem", email = "seu_email@exemplo.com" }
+]
+
+keywords = [
+    "astronomy", "exoplanets", "limb darkening",
+    "transit", "TESS", "Kepler", "stellar atmosphere"
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "numpy>=1.21",
+    "pandas>=1.5",
+    "scipy>=1.8",
+    "pyarrow>=12.0",   # leitura de parquet
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "ruff",            # linter
+    "build",           # python -m build
+    "twine",           # upload PyPI
+]
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
+
+[project.urls]
+Homepage      = "https://github.com/icaromeidem/meidem"
+Documentation = "https://meidem.readthedocs.io"
+Repository    = "https://github.com/icaromeidem/meidem"
+"Bug Tracker" = "https://github.com/icaromeidem/meidem/issues"
+
+[tool.setuptools.packages.find]
+where = [".."]
+
+[tool.setuptools.package-data]
+# Inclui todas as tabelas parquet no pacote instalado
+"meidem.tables" = ["**/*.parquet"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
