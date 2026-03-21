@@ -8,6 +8,7 @@
 [![PyPI version](https://badge.fury.io/py/meidem.svg)](https://badge.fury.io/py/meidem)
 [![Python](https://img.shields.io/pypi/pyversions/meidem)](https://pypi.org/project/meidem/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://github.com/icaromeidem/meidem/actions/workflows/tests.yml/badge.svg)](https://github.com/icaromeidem/meidem/actions/workflows/tests.yml)
 
 MEIDEM is a Python package that provides a unified interface for interpolating stellar **limb darkening (LD) coefficients** from multiple published grids. Instead of dealing with different table formats, column names, and interpolation strategies for each grid, you call a single function — `get_ld_coefficients()` — and MEIDEM handles the rest.
 
