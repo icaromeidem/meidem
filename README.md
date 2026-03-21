@@ -379,19 +379,19 @@ meidem.get_ld_coefficients(
 
 ```python
 {
-    'coefficients': [c, alpha],                     # interpolated LD coefficients
-    'n_coeffs'    : 2,                              # number of coefficients
-    'law'         : 'power2',                       # LD law used
-    'passband'    : 'TESS',                         # passband used
-    'grid'        : 'kostogryz2022',                # grid used
+    'coefficients': [c, alpha],       # interpolated LD coefficients
+    'n_coeffs'    : 2,                # number of coefficients
+    'law'         : 'power2',         # LD law used
+    'passband'    : 'TESS',           # passband used
+    'grid'        : 'kostogryz2022',  # grid used
     'reference'   : 'Kostogryz et al. (2022)',
     'doi'         : '10.1051/0004-6361/202140376',
     'teff_input'  : 5778.0,
     'logg_input'  : 4.44,
     'feh_input'   : 0.0,
-    'xi'          : None,                           # float if Claret ATLAS, else None
-    'met'         : None,                           # str if Claret 2017/2011, else None
-    'mod'         : None,                           # str if Claret 2017/2011, else None
+    'xi'          : None,   # float if Claret ATLAS, else None
+    'met'         : None,   # str if Claret 2017/2011, else None
+    'mod'         : None,   # str if Claret 2017/2011, else None
 }
 ```
 
