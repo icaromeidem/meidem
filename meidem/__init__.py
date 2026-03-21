@@ -71,6 +71,8 @@ _GRIDS = {
         'laws'      : ['nonlinear', 'power2'],
         'passbands' : ['TESS', 'Kepler', 'CHEOPS', 'PLATO'],
         'doi'       : '10.1051/0004-6361/202140376',
+        'xi' : None,   
+
     },
     'claret2022': {
         'class'     : Claret2022Grid,
@@ -82,6 +84,8 @@ _GRIDS = {
                        'Johnson_U', 'Johnson_B', 'Johnson_V', 'Johnson_R', 'Johnson_I',
                        '2MASS_J', '2MASS_H', '2MASS_K'],
         'doi'       : '10.1051/0004-6361/202244278',
+        'xi' : [0, 1, 2, 4, 8],
+
     },
     'claret2017': {
         'class'     : Claret2017Grid,
@@ -90,6 +94,7 @@ _GRIDS = {
         'laws'      : ['quadratic', 'square-root', 'logarithmic', '4coeff', 'linear', 'y'],
         'passbands' : ['TESS'],
         'doi'       : '10.1051/0004-6361/201629705',
+        'xi' : [0, 1, 2, 4, 8],
     },
     'claret2011': {
         'class'     : Claret2011Grid,
@@ -98,6 +103,8 @@ _GRIDS = {
         'laws'      : ['quadratic', 'root-square', 'logarithmic', '4coeff', 'linear', 'y'],
         'passbands' : ['Kp', 'C', 'S1', 'S2'],
         'doi'       : '10.1051/0004-6361/201116451',
+        'xi' : [0, 1, 2, 4, 8],
+
     },
 }
 
@@ -275,7 +282,7 @@ def get_ld_coefficients(
         'feh_input'   : feh,
         'xi'          : xi  if _uses_atlas_xi else None,
         'met'         : met if _uses_claret   else None,
-        'mod'         : mod if _uses_claret   else None,
+        'mod' : mod if _uses_claret else ('A' if grid == 'claret2022' else None),    
     }
 
 
@@ -299,6 +306,8 @@ def available_grids(verbose=True):
             print(f"    Model     : {info['model']}")
             print(f"    Laws      : {info['laws']}")
             print(f"    Passbands : {info['passbands']}")
+            xi_str = str(info['xi']) + " km/s" if info['xi'] else "not applicable"
+            print(f"    xi (km/s) : {xi_str}")
             print(f"    DOI       : {info['doi']}")
         print("=" * 65)
     return list(_GRIDS.keys())
