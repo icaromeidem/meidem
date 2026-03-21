@@ -1,10 +1,10 @@
 [build-system]
-requires      = ["setuptools>=68", "wheel"]
+requires      = ["setuptools>=68", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name        = "meidem"
-version     = "1.0.0"
+name    = "meidem"
+dynamic = ["version"]
 description = "Multi-grid Epic Interpolator for limb DarkEning Models"
 readme      = "README.md"
 license     = {file = "LICENSE"}
@@ -78,3 +78,5 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+[tool.setuptools_scm]
+write_to = "meidem/_version.py" 

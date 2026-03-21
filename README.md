@@ -1,6 +1,6 @@
 #
 <p align="center">
-  <img src="logo/meidem2.png" alt="MEIDEM logo" width="430"/>
+  <img src="logo/meidem2.png" alt="MEIDEM logo" width="435"/>
 </p>
 
 # MEIDEM - Multi-grid Epic Interpolator for stellar limb DarkEning Models
