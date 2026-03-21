@@ -9,8 +9,3 @@ pytest-cov
 ruff
 build
 twine
-
-[docs]
-mkdocs
-mkdocs-material
-mkdocstrings[python]

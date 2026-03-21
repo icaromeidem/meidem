@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name        = "meidem"
-version     = "0.1.0"
-description = "Multi-grid Exoplanet Interpolator for limb DarkEning Models"
+version     = "1.0.0"
+description = "Multi-grid Epic Interpolator for limb DarkEning Models"
 readme      = "README.md"
-license     = { file = "LICENSE" }
+license     = "MIT"
 requires-python = ">=3.9"
 
 authors = [
@@ -15,15 +15,14 @@ authors = [
 ]
 
 keywords = [
-    "astronomy", "exoplanets", "limb darkening",
-    "transit", "TESS", "Kepler", "stellar atmosphere"
+    "astronomy", "limb darkening", "stellar atmosphere",
+    "transit", "TESS", "Kepler", "exoplanets"
 ]
 
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Astronomy",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -35,35 +34,45 @@ dependencies = [
     "numpy>=1.21",
     "pandas>=1.5",
     "scipy>=1.8",
-    "pyarrow>=12.0",   # leitura de parquet
+    "pyarrow>=12.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "pytest-cov",
-    "ruff",            # linter
-    "build",           # python -m build
-    "twine",           # upload PyPI
-]
-docs = [
-    "mkdocs",
-    "mkdocs-material",
-    "mkdocstrings[python]",
+    "ruff",
+    "build",
+    "twine",
 ]
 
 [project.urls]
 Homepage      = "https://github.com/icaromeidem/meidem"
-Documentation = "https://meidem.readthedocs.io"
 Repository    = "https://github.com/icaromeidem/meidem"
 "Bug Tracker" = "https://github.com/icaromeidem/meidem/issues"
 
+# ── Configuração do pacote ─────────────────────────────────────
+# Estrutura esperada:
+#   ~/Documentos/meidem/          ← pyproject.toml está aqui
+#       meidem/                   ← pacote Python
+#           __init__.py
+#           _version.py
+#           grids/
+#           tables/
+#               kostogryz2022/
+#               claret2022/
+#               claret2017/
+#               claret2011/
+
 [tool.setuptools.packages.find]
-where = [".."]
+where     = ["."]         # procura pacotes APENAS nesta pasta
+include   = ["meidem*"]   # inclui só o pacote meidem e subpacotes
 
 [tool.setuptools.package-data]
-# Inclui todas as tabelas parquet no pacote instalado
-"meidem.tables" = ["**/*.parquet"]
+"meidem" = [
+    "tables/**/*.parquet",
+    "tables/*/*.parquet",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

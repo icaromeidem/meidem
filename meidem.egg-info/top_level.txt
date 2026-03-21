@@ -1,6 +1,1 @@
-ld_claret
-ld_claret_tess
-ld_claret_tess2022
-ld_utils
 meidem
-tests
