@@ -7,7 +7,7 @@ name        = "meidem"
 version     = "1.0.0"
 description = "Multi-grid Epic Interpolator for limb DarkEning Models"
 readme      = "README.md"
-license     = "MIT"
+license     = {file = "LICENSE"}
 requires-python = ">=3.9"
 
 authors = [
@@ -65,9 +65,8 @@ Repository    = "https://github.com/icaromeidem/meidem"
 #               claret2011/
 
 [tool.setuptools.packages.find]
-where     = ["."]         # procura pacotes APENAS nesta pasta
-include   = ["meidem*"]   # inclui só o pacote meidem e subpacotes
-
+where     = ["."]         
+include   = ["meidem"]  
 [tool.setuptools.package-data]
 "meidem" = [
     "tables/**/*.parquet",
