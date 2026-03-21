@@ -1,80 +1,62 @@
-[build-system]
-requires      = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+name: Publish to PyPI
 
-[project]
-name        = "meidem"
-version     = "1.0.0"
-description = "Multi-grid Epic Interpolator for limb DarkEning Models"
-readme      = "README.md"
-license     = {file = "LICENSE"}
-requires-python = ">=3.9"
+on:
+  push:
+    tags:
+      - "v*.*.*"
 
-authors = [
-    { name = "Icaro Meidem", email = "seu_email@exemplo.com" }
-]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
-keywords = [
-    "astronomy", "limb darkening", "stellar atmosphere",
-    "transit", "TESS", "Kepler", "exoplanets"
-]
+    steps:
+      - uses: actions/checkout@v4
 
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering :: Astronomy",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-]
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-dependencies = [
-    "numpy>=1.21",
-    "pandas>=1.5",
-    "scipy>=1.8",
-    "pyarrow>=12.0",
-]
+      - name: Install build tools
+        run: pip install build twine
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov",
-    "ruff",
-    "build",
-    "twine",
-]
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
 
-[project.urls]
-Homepage      = "https://github.com/icaromeidem/meidem"
-Repository    = "https://github.com/icaromeidem/meidem"
-"Bug Tracker" = "https://github.com/icaromeidem/meidem/issues"
+      - name: Update version in pyproject.toml and _version.py
+        run: |
+          python - <<'EOF'
+          import re, pathlib, os
+          version = os.environ["VERSION"]
 
-# ── Configuração do pacote ─────────────────────────────────────
-# Estrutura esperada:
-#   ~/Documentos/meidem/          ← pyproject.toml está aqui
-#       meidem/                   ← pacote Python
-#           __init__.py
-#           _version.py
-#           grids/
-#           tables/
-#               kostogryz2022/
-#               claret2022/
-#               claret2017/
-#               claret2011/
+          # atualiza pyproject.toml
+          p = pathlib.Path("pyproject.toml")
+          content = p.read_text()
+          content = re.sub(r'^version\s*=\s*"[^"]+"', f'version = "{version}"', content, flags=re.MULTILINE)
+          p.write_text(content)
 
-[tool.setuptools.packages.find]
-where     = ["."]         
-include   = ["meidem"]  
-[tool.setuptools.package-data]
-"meidem" = [
-    "tables/**/*.parquet",
-    "tables/*/*.parquet",
-]
+          # atualiza _version.py
+          v = pathlib.Path("meidem/_version.py")
+          v.write_text(f'__version__ = "{version}"\n')
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
+          print(f"✓ versão atualizada para {version}")
+          EOF
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
 
-[tool.ruff]
-line-length = 100
+      - name: Confirm versions
+        run: |
+          grep '^version' pyproject.toml
+          cat meidem/_version.py
+
+      - name: Build package
+        run: python -m build
+
+      - name: Upload to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload dist/*
