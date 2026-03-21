@@ -389,9 +389,9 @@ meidem.get_ld_coefficients(
     'teff_input'  : 5778.0,
     'logg_input'  : 4.44,
     'feh_input'   : 0.0,
-    'xi'          : None,   # float if Claret ATLAS, else None
-    'met'         : None,   # str if Claret 2017/2011, else None
-    'mod'         : None,   # str if Claret 2017/2011, else None
+    'xi'          : None,               # float if Claret ATLAS, else None
+    'met'         : None,               # str if Claret 2017/2011, else None
+    'mod'         : None,               # str if Claret 2017/2011, else None
 }
 ```
 
