@@ -3,7 +3,7 @@
   <img src="logo/meidem2.png" alt="MEIDEM logo" width="430"/>
 </p>
 
-# MEIDEM - Multi-grid Exoplanet Interpolator for limb DarkEning Models
+# MEIDEM - Multi-grid Epic Interpolator for stellar limb DarkEning Models
 
 [![PyPI version](https://badge.fury.io/py/meidem.svg)](https://badge.fury.io/py/meidem)
 [![Python](https://img.shields.io/pypi/pyversions/meidem)](https://pypi.org/project/meidem/)
