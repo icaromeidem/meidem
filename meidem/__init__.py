@@ -1,35 +1,35 @@
 """
 MEIDEM — Multi-grid Exoplanet Interpolator for limb DarkEning Models
 =====================================================================
-API pública unificada para interpolação de coeficientes de limb darkening
-a partir de múltiplas grades da literatura.
+Unified public API for interpolating limb darkening coefficients
+from multiple published grids.
 
-Grades suportadas
------------------
+Supported grids
+---------------
   'kostogryz2022' : Kostogryz+2022, MPS-ATLAS
-                    Leis: 'nonlinear' (4coeff), 'power2'
+                    Laws: 'nonlinear' (4coeff), 'power2'
                     Passbands: TESS, Kepler, CHEOPS, PLATO
 
   'claret2022'    : Claret & Southworth 2022, A&A 664, A128
-                    Leis: 'power2'
+                    Laws: 'power2'
                     Passbands: TESS, Kepler, Gaia_G, Gaia_BP, Gaia_RP,
                                SDSS_u, SDSS_g, SDSS_r, SDSS_i, SDSS_z,
                                uvby, Johnson_U/B/V/R/I, 2MASS_J/H/K
 
   'claret2017'    : Claret 2017, A&A 600, A30
-                    Leis: 'quadratic', 'square-root', 'logarithmic',
+                    Laws: 'quadratic', 'square-root', 'logarithmic',
                            '4coeff', 'linear', 'y'
                     Passbands: TESS
-                    Modelos: ATLAS (mod='A'), PHOENIX (mod='P')
+                    Models: ATLAS (mod='A'), PHOENIX (mod='P')
 
   'claret2011'    : Claret & Bloemen 2011, A&A 529, A75
-                    Leis: 'quadratic', 'root-square', 'logarithmic',
+                    Laws: 'quadratic', 'root-square', 'logarithmic',
                            '4coeff', 'linear', 'y'
                     Passbands: Kepler (Kp), CoRoT (C), Spitzer (S1, S2)
-                    Modelos: ATLAS (mod='A'), PHOENIX (mod='P')
+                    Models: ATLAS (mod='A'), PHOENIX (mod='P')
 
-Uso rápido
-----------
+Quick start
+-----------
 >>> import meidem
 >>> result = meidem.get_ld_coefficients(
 ...     teff=5778, logg=4.44, feh=0.0,
@@ -39,11 +39,13 @@ Uso rápido
 ... )
 >>> print(result['coefficients'])
 
->>> # Listar grades e leis disponíveis
+>>> # List available grids and laws
 >>> meidem.available_grids()
 >>> meidem.available_laws('claret2017')
 >>> meidem.available_passbands('claret2022')
 """
+
+import warnings  # top-level import
 
 from ._version import __version__
 from .grids.kostogryz2022 import KostogryzGrid
@@ -59,7 +61,7 @@ __all__ = [
     'available_passbands',
 ]
 
-# ── Registro de grades ────────────────────────────────────────────────────────
+# ── Grid registry ─────────────────────────────────────────────────────────────
 
 _GRIDS = {
     'kostogryz2022': {
@@ -99,116 +101,136 @@ _GRIDS = {
     },
 }
 
-# ── API principal ─────────────────────────────────────────────────────────────
+# ── Main API ──────────────────────────────────────────────────────────────────
+
+_ATLAS_GRIDS = {'claret2022', 'claret2017', 'claret2011'}
+_XI_DEFAULT = object() 
 
 def get_ld_coefficients(
     teff,
     logg,
     feh,
     passband,
-    grid        = 'kostogryz2022',
-    law         = None,
-    xi          = 2.0,
-    met         = 'L',
-    mod         = 'A',
-    verbose     = False,
+    grid    = 'kostogryz2022',
+    law     = None,
+    xi      = _XI_DEFAULT,   # ← sentinel em vez de 2.0
+    met     = 'L',
+    mod     = 'A',
+    verbose = False,
 ):
+    
     """
-    Interpola coeficientes de limb darkening a partir de grades da literatura.
+    Interpolate limb darkening coefficients from published grids.
 
-    Parâmetros
+    Parameters
     ----------
     teff     : float
-        Temperatura efetiva da estrela (K).
+        Stellar effective temperature (K).
     logg     : float
-        Gravidade superficial log g (cgs).
+        Surface gravity log g (cgs).
     feh      : float
-        Metalicidade [Fe/H] (dex).
+        Metallicity [Fe/H] (dex).
     passband : str
-        Banda fotométrica. Depende da grade escolhida.
-        Ex: 'TESS', 'Kepler', 'Gaia_G', 'Kp', 'C'
+        Photometric passband. Depends on the chosen grid.
+        E.g.: 'TESS', 'Kepler', 'Gaia_G', 'Kp', 'C'
     grid     : str, optional
-        Grade de coeficientes. Default: 'kostogryz2022'.
-        Opções: 'kostogryz2022', 'claret2022', 'claret2017', 'claret2011'
+        LD coefficient grid. Default: 'kostogryz2022'.
+        Options: 'kostogryz2022', 'claret2022', 'claret2017', 'claret2011'
     law      : str or None, optional
-        Lei de limb darkening. Se None, usa o default da grade:
+        Limb darkening law. If None, uses the grid default:
           - kostogryz2022 → 'power2'
           - claret2022    → 'power2'
           - claret2017    → 'quadratic'
           - claret2011    → 'quadratic'
     xi       : float, optional
-        Microturbulência em km/s (só ATLAS). Default: 2.0.
-        Valores disponíveis: 0, 1, 2, 4, 8.
+        Microturbulence in km/s (ATLAS only). Default: 2.0.
+        Available values: 0, 1, 2, 4, 8.
+        Always set explicitly — if omitted, a UserWarning is emitted.
     met      : str, optional
-        Método de ajuste (só Claret 2017/2011).
+        Fitting method (Claret 2017/2011 only).
         'L' = Least-Squares (default) | 'F' = Flux Conservation
     mod      : str, optional
-        Modelo de atmosfera (só Claret 2017/2011).
+        Atmospheric model (Claret 2017/2011 only).
         'A' = ATLAS (default) | 'P' = PHOENIX
     verbose  : bool, optional
-        Se True, imprime informações da grade e coeficientes. Default: False.
+        If True, prints grid info and coefficients. Default: False.
 
-    Retorno
+    Returns
     -------
-    dict com chaves:
-        'coefficients' : list[float]  — coeficientes interpolados
-        'n_coeffs'     : int          — número de coeficientes
-        'law'          : str          — lei de LD usada
-        'passband'     : str          — passband usada
-        'grid'         : str          — grade usada
-        'reference'    : str          — citação bibliográfica
-        'doi'          : str          — DOI do artigo
-        'teff_input'   : float        — Teff fornecida
-        'logg_input'   : float        — logg fornecido
-        'feh_input'    : float        — [Fe/H] fornecido
-        'xi'           : float|None   — microturbulência (None se PHOENIX)
-        'met'          : str|None     — método (None se não aplicável)
-        'mod'          : str|None     — modelo (None se não aplicável)
+    dict with keys:
+        'coefficients' : list[float]  — interpolated LD coefficients
+        'n_coeffs'     : int          — number of coefficients
+        'law'          : str          — LD law used
+        'passband'     : str          — passband used
+        'grid'         : str          — grid used
+        'reference'    : str          — bibliographic reference
+        'doi'          : str          — paper DOI
+        'teff_input'   : float        — input Teff
+        'logg_input'   : float        — input logg
+        'feh_input'    : float        — input [Fe/H]
+        'xi'           : float|None   — microturbulence (None if PHOENIX or kostogryz2022)
+        'met'          : str|None     — fitting method (None if not applicable)
+        'mod'          : str|None     — atmospheric model (None if not applicable)
 
-    Exemplos
+    Examples
     --------
     >>> import meidem
 
-    >>> # Kostogryz+2022 — power-2 para TESS
+    >>> # Kostogryz+2022 — power-2 for TESS
     >>> r = meidem.get_ld_coefficients(5778, 4.44, 0.0, 'TESS', grid='kostogryz2022', law='power2')
     >>> r['coefficients']
     [0.412, 0.631]
 
-    >>> # Claret & Southworth 2022 — power-2 para Kepler
-    >>> r = meidem.get_ld_coefficients(5778, 4.44, 0.0, 'Kepler', grid='claret2022')
+    >>> # Claret & Southworth 2022 — power-2 for Kepler
+    >>> r = meidem.get_ld_coefficients(5778, 4.44, 0.0, 'Kepler', grid='claret2022', xi=2.0)
     >>> r['coefficients']
     [0.398, 0.618]
 
-    >>> # Claret 2017 — quadratic para TESS, ATLAS, Least-Squares
+    >>> # Claret 2017 — quadratic for TESS, ATLAS, Least-Squares
     >>> r = meidem.get_ld_coefficients(5778, 4.44, 0.0, 'TESS',
-    ...     grid='claret2017', law='quadratic', mod='A', met='L')
+    ...     grid='claret2017', law='quadratic', mod='A', met='L', xi=2.0)
     >>> r['coefficients']
     [0.321, 0.287]
 
-    >>> # Claret & Bloemen 2011 — quadratic para Kepler
+    >>> # Claret & Bloemen 2011 — quadratic for Kepler
     >>> r = meidem.get_ld_coefficients(5778, 4.44, 0.0, 'Kp',
-    ...     grid='claret2011', law='quadratic')
+    ...     grid='claret2011', law='quadratic', xi=2.0)
     >>> r['coefficients']
     [0.415, 0.295]
 
     Raises
     ------
     ValueError
-        Se a grade, lei ou passband não forem suportadas, ou se os parâmetros
-        estelares estiverem fora dos limites da grade.
+        If the grid, law, or passband are not supported, or if the stellar
+        parameters are outside the grid limits.
     """
-    # ── Valida grade ──────────────────────────────────────────
+
+    # ── 1. Normalise and validate grid ────────────────────────
     grid = grid.lower()
     if grid not in _GRIDS:
         raise ValueError(
-            f"Grade '{grid}' não suportada.\n"
-            f"Opções disponíveis: {list(_GRIDS.keys())}\n"
-            f"Use meidem.available_grids() para ver detalhes."
+            f"Grid '{grid}' is not supported.\n"
+            f"Available options: {list(_GRIDS.keys())}\n"
+            f"Use meidem.available_grids() for details."
         )
+
+    # ── 2. Warn se xi não foi passado explicitamente ──────────
+    xi_explicit = xi is not _XI_DEFAULT
+    if not xi_explicit:
+        xi = 2.0  # aplica o default real aqui
+        if grid in _ATLAS_GRIDS and mod.upper() == 'A':
+            warnings.warn(
+                "Using default microturbulence xi=2.0 km/s. "
+                "Available values: 0, 1, 2, 4, 8 km/s. "
+                "Set xi explicitly if your star requires a different value "
+                "(see meidem documentation for guidelines by stellar type).",
+                UserWarning,
+                stacklevel=2,
+            )
 
     grid_info = _GRIDS[grid]
 
-    # ── Default de lei por grade ──────────────────────────────
+    # ── 3. Default law per grid ───────────────────────────────
     _default_law = {
         'kostogryz2022': 'power2',
         'claret2022'   : 'power2',
@@ -218,10 +240,9 @@ def get_ld_coefficients(
     if law is None:
         law = _default_law[grid]
 
-    # ── Instancia interpolador e obtém coeficientes ───────────
+    # ── 4. Instantiate interpolator and get coefficients ──────
     InterpolatorClass = grid_info['class']
 
-    # Argumentos comuns a todas as grades
     common_kwargs = dict(teff=teff, logg=logg, feh=feh, verbose=verbose)
 
     if grid == 'kostogryz2022':
@@ -237,7 +258,10 @@ def get_ld_coefficients(
         coeffs, meta = InterpolatorClass.interpolate(
             passband=passband, law=law, xi=xi, met=met, mod=mod, **common_kwargs)
 
-    # ── Monta retorno padronizado ─────────────────────────────
+    # ── 5. Build standardised return dict ────────────────────
+    _uses_atlas_xi = grid in _ATLAS_GRIDS and mod.upper() == 'A'
+    _uses_claret   = grid in ('claret2017', 'claret2011')
+
     return {
         'coefficients': coeffs,
         'n_coeffs'    : len(coeffs),
@@ -249,74 +273,74 @@ def get_ld_coefficients(
         'teff_input'  : teff,
         'logg_input'  : logg,
         'feh_input'   : feh,
-        'xi'          : xi if grid in ('claret2017', 'claret2011') and mod == 'A' else None,
-        'met'         : met if grid in ('claret2017', 'claret2011') else None,
-        'mod'         : mod if grid in ('claret2017', 'claret2011') else None,
+        'xi'          : xi  if _uses_atlas_xi else None,
+        'met'         : met if _uses_claret   else None,
+        'mod'         : mod if _uses_claret   else None,
     }
 
 
-# ── Funções de descoberta ─────────────────────────────────────────────────────
+# ── Discovery functions ───────────────────────────────────────────────────────
 
 def available_grids(verbose=True):
     """
-    Lista todas as grades de LD disponíveis no MEIDEM.
+    List all LD grids available in MEIDEM.
 
-    Retorno
+    Returns
     -------
-    list[str] — nomes das grades disponíveis
+    list[str] — names of available grids
     """
     if verbose:
         print("=" * 65)
-        print("MEIDEM — Grades de Limb Darkening disponíveis")
+        print("MEIDEM — Available Limb Darkening Grids")
         print("=" * 65)
         for name, info in _GRIDS.items():
             print(f"\n  [{name}]")
-            print(f"    Referência : {info['reference']}")
-            print(f"    Modelo     : {info['model']}")
-            print(f"    Leis       : {info['laws']}")
-            print(f"    Passbands  : {info['passbands']}")
-            print(f"    DOI        : {info['doi']}")
+            print(f"    Reference : {info['reference']}")
+            print(f"    Model     : {info['model']}")
+            print(f"    Laws      : {info['laws']}")
+            print(f"    Passbands : {info['passbands']}")
+            print(f"    DOI       : {info['doi']}")
         print("=" * 65)
     return list(_GRIDS.keys())
 
 
 def available_laws(grid, verbose=True):
     """
-    Lista as leis de LD disponíveis para uma grade específica.
+    List the LD laws available for a specific grid.
 
-    Parâmetros
+    Parameters
     ----------
-    grid : str — nome da grade
+    grid : str — grid name
 
-    Retorno
+    Returns
     -------
     list[str]
     """
     grid = grid.lower()
     if grid not in _GRIDS:
-        raise ValueError(f"Grade '{grid}' não encontrada. Use available_grids().")
+        raise ValueError(f"Grid '{grid}' not found. Use available_grids().")
     laws = _GRIDS[grid]['laws']
     if verbose:
-        print(f"Leis disponíveis para '{grid}': {laws}")
+        print(f"Available laws for '{grid}': {laws}")
     return laws
 
 
 def available_passbands(grid, verbose=True):
     """
-    Lista as passbands disponíveis para uma grade específica.
+    List the passbands available for a specific grid.
 
-    Parâmetros
+    Parameters
     ----------
-    grid : str — nome da grade
+    grid : str — grid name
 
-    Retorno
+    Returns
     -------
     list[str]
     """
     grid = grid.lower()
     if grid not in _GRIDS:
-        raise ValueError(f"Grade '{grid}' não encontrada. Use available_grids().")
+        raise ValueError(f"Grid '{grid}' not found. Use available_grids().")
     passbands = _GRIDS[grid]['passbands']
     if verbose:
-        print(f"Passbands disponíveis para '{grid}': {passbands}")
+        print(f"Available passbands for '{grid}': {passbands}")
     return passbands

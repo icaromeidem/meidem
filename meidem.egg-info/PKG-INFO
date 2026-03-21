@@ -122,7 +122,7 @@ SUN = dict(teff=5772, logg=4.438, feh=0.0)
 
 print("LD coefficients for the Sun (IAU 2015)\n")
 
-# Kostogryz+2022 — power-2 for TESS
+# Kostogryz+2022 — power-2 for TESS (no xi — MPS-ATLAS grid)
 r = meidem.get_ld_coefficients(**SUN, passband='TESS',
                                 grid='kostogryz2022', law='power2')
 print(f"Kostogryz+2022  power-2    TESS   : {r['coefficients']}")
@@ -134,18 +134,23 @@ r = meidem.get_ld_coefficients(**SUN, passband='TESS',
 print(f"Kostogryz+2022  nonlinear  TESS   : {r['coefficients']}")
 
 # Claret & Southworth 2022 — power-2 for TESS
-r = meidem.get_ld_coefficients(**SUN, passband='TESS', grid='claret2022')
+# Sun is a FGK dwarf → xi=2.0 km/s (Valenti & Fischer 2005)
+r = meidem.get_ld_coefficients(**SUN, passband='TESS', grid='claret2022',
+                                xi=2.0)
 print(f"Claret2022      power-2    TESS   : {r['coefficients']}")
 
 # Claret 2017 — quadratic for TESS, ATLAS model, Least-Squares
+# Sun is a FGK dwarf → xi=2.0 km/s (Valenti & Fischer 2005)
 r = meidem.get_ld_coefficients(**SUN, passband='TESS',
                                 grid='claret2017', law='quadratic',
-                                mod='A', met='L')
+                                mod='A', met='L', xi=2.0)
 print(f"Claret2017      quadratic  TESS   : {r['coefficients']}")
 
 # Claret & Bloemen 2011 — quadratic for Kepler
+# Sun is a FGK dwarf → xi=2.0 km/s (Valenti & Fischer 2005)
 r = meidem.get_ld_coefficients(**SUN, passband='Kp',
-                                grid='claret2011', law='quadratic')
+                                grid='claret2011', law='quadratic',
+                                xi=2.0)
 print(f"Claret2011      quadratic  Kepler : {r['coefficients']}")
 ```
 
@@ -201,6 +206,8 @@ MEIDEM currently supports four published grids. Each covers a different combinat
 
 **Grid limits:** Teff ≈ 3500–10000 K · logg ≈ 2.0–5.0 · [Fe/H] ≈ −5.0 to +1.0
 
+**Microturbulence (xi):** Not applicable — this grid does not depend on xi.
+
 **Laws available:**
 
 | Law key | Coefficients | Equation |
@@ -233,7 +240,7 @@ r = meidem.get_ld_coefficients(
 
 **Laws available:** Power-2 only
 
-**Microturbulence (xi):** Available at ξ = 0, 1, 2, 4, 8 km/s. Default is ξ = 2.0 km/s, appropriate for most FGK main-sequence stars.
+**Microturbulence (xi):** Available at ξ = 0, 1, 2, 4, 8 km/s. **Always set `xi` explicitly** — see the [xi selection guide](#which-microturbulence-xi) below.
 
 **When to use:** Excellent choice when you need **power-2 coefficients for a wide range of passbands beyond TESS and Kepler** — especially Gaia, SDSS, or Johnson bands. Also useful for comparison with `kostogryz2022` for TESS and Kepler.
 
@@ -242,7 +249,7 @@ r = meidem.get_ld_coefficients(
     teff=5778, logg=4.44, feh=0.0,
     passband='Gaia_G',   # or 'TESS', 'Kepler', 'SDSS_r', 'Johnson_V', ...
     grid='claret2022',
-    xi=2.0,
+    xi=2.0,              # set explicitly: 0, 1, 2, 4, or 8 km/s
 )
 ```
 
@@ -259,6 +266,8 @@ r = meidem.get_ld_coefficients(
 **Grid limits (ATLAS):** Teff ≈ 3500–50000 K · logg ≈ 0.0–5.0 · [Fe/H] ≈ −5.0 to +1.0 · ξ = 0–8 km/s
 
 **Grid limits (PHOENIX):** Teff ≈ 1500–12000 K · logg ≈ 2.5–6.0 · [Fe/H] = 0.0 only
+
+**Microturbulence (xi):** Applies to ATLAS only (ignored for PHOENIX). **Always set `xi` explicitly when using `mod='A'`** — see the [xi selection guide](#which-microturbulence-xi) below.
 
 **Laws available:**
 
@@ -296,10 +305,11 @@ r = meidem.get_ld_coefficients(
     law='quadratic',
     mod='A',    # 'A' = ATLAS | 'P' = PHOENIX
     met='L',    # 'L' = Least-Squares | 'F' = Flux Conservation
-    xi=2.0,
+    xi=2.0,     # set explicitly: 0, 1, 2, 4, or 8 km/s (ATLAS only)
 )
 
 # PHOENIX — better for cool stars (Teff < 5000 K), [Fe/H] = 0.0 only
+# xi is not used for PHOENIX
 r = meidem.get_ld_coefficients(
     teff=3800, logg=4.8, feh=0.0,
     passband='TESS',
@@ -321,6 +331,8 @@ r = meidem.get_ld_coefficients(
 
 **Laws available:** quadratic, root-square, logarithmic, 4coeff, linear, y
 
+**Microturbulence (xi):** Same as Claret 2017 — applies to ATLAS only. **Always set `xi` explicitly when using `mod='A'`.**
+
 **Fitting methods (`met`) and models (`mod`):** Same as Claret 2017.
 
 **When to use:** This is the **standard reference grid for Kepler and CoRoT** — one of the most cited LD grids in the exoplanet literature. If you are working with Kepler light curves, this is the grid to use for comparison with published results.
@@ -333,7 +345,7 @@ r = meidem.get_ld_coefficients(
     law='quadratic',
     mod='A',
     met='L',
-    xi=2.0,
+    xi=2.0,                 # set explicitly: 0, 1, 2, 4, or 8 km/s (ATLAS only)
 )
 ```
 
@@ -363,6 +375,24 @@ The power-2 law shows the lowest residuals and the smallest bias in recovered tr
 | `logarithmic` / `square-root` | Better than quadratic, less widely supported by transit codes. |
 | `linear` | Avoid — biases up to ~3% in Rp/R* (Espinoza & Jordán 2016). |
 
+### Which microturbulence (xi)?
+
+The `xi` parameter applies only to ATLAS-based grids (`claret2022`, `claret2017` with `mod='A'`, `claret2011` with `mod='A'`). It has no effect on MPS-ATLAS (`kostogryz2022`) or PHOENIX models. **Always set `xi` explicitly** — if omitted, MEIDEM defaults to 2.0 km/s and will emit a `UserWarning`.
+
+Microturbulence correlates primarily with Teff and logg (Bruntt et al. 2010; Valenti & Fischer 2005). The table below gives recommended values for the discrete grid points available in the Claret grids:
+
+| Stellar type | logg range | Recommended xi | Reference |
+|--------------|-----------|---------------|-----------|
+| FGK main-sequence dwarfs | 4.0 – 5.0 | 2.0 km/s | Valenti & Fischer (2005) |
+| Subgiants / metal-poor stars | 3.5 – 4.0 | 1.0 km/s | Bruntt et al. (2010) |
+| Giants | 2.0 – 3.5 | 4.0 km/s | Bruntt et al. (2010) |
+| Supergiants | < 2.0 | 8.0 km/s | Gray (2008) |
+| Cool M dwarfs | — | use PHOENIX (`mod='P'`) | — |
+
+Available values in the grids: **0, 1, 2, 4, 8** km/s.
+
+> **Note:** These are guidelines based on typical values in the literature. For precision work, determine xi from a spectroscopic analysis of your target star (e.g. by requiring no trend between Fe i line abundance and equivalent width).
+
 ### Grid coverage and known limitations
 
 Each grid covers a finite region of stellar parameter space. Stars outside the grid raise a `ValueError` — MEIDEM **never extrapolates silently**.
@@ -390,12 +420,14 @@ meidem.get_ld_coefficients(
     passband,                   # str   — photometric passband
     grid    = 'kostogryz2022',  # str   — grid key
     law     = None,             # str   — LD law (None = grid default)
-    xi      = 2.0,              # float — microturbulence km/s (ATLAS only)
+    xi      = 2.0,              # float — microturbulence km/s (ATLAS only; set explicitly)
     met     = 'L',              # str   — fitting method: 'L' or 'F'
     mod     = 'A',              # str   — atmospheric model: 'A' or 'P'
     verbose = False,            # bool  — print grid info
 )
 ```
+
+> **Note on `xi`:** If you use an ATLAS-based grid and do not set `xi` explicitly, MEIDEM defaults to 2.0 km/s and emits a `UserWarning`. Always pass `xi` explicitly to suppress the warning and ensure physically correct results. Available values: 0, 1, 2, 4, 8 km/s. See the [xi selection guide](#which-microturbulence-xi) for recommendations by stellar type.
 
 **Returns:**
 
@@ -436,7 +468,7 @@ If you use MEIDEM in your research, please cite the package and the grid(s) you 
 ```bibtex
 @software{meidem,
   author  = {Meidem, Icaro},
-  title   = {{MEIDEM}: Multi-grid Exoplanet Interpolator for limb DarkEning Models},
+  title   = {{MEIDEM}: Multi-grid Epic Interpolator for limb DarkEning Models},
   year    = {2026},
   url     = {https://github.com/icaromeidem/meidem},
 }
@@ -451,10 +483,13 @@ If you use MEIDEM in your research, please cite the package and the grid(s) you 
 
 **Key references used in this documentation:**
 
+- Bruntt, H. et al. (2010), MNRAS 405, 1907 — [doi:10.1111/j.1365-2966.2010.16545.x](https://doi.org/10.1111/j.1365-2966.2010.16545.x)
 - Espinoza & Jordán (2015), MNRAS 450, 1879
 - Espinoza & Jordán (2016), MNRAS 457, 3573
+- Gray, D. F. (2008), *The Observation and Analysis of Stellar Photospheres*, 3rd ed., Cambridge University Press
 - Maxted (2023), MNRAS 519, 3723
 - Patel & Espinoza (2022), AJ 163, 228
+- Valenti, J. A. & Fischer, D. A. (2005), ApJS 159, 141 — [doi:10.1086/430500](https://doi.org/10.1086/430500)
 
 ---
 

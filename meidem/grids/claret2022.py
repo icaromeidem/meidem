@@ -1,18 +1,18 @@
 """
 meidem/grids/claret2022.py
 ===========================
-Interpolador de coeficientes de limb darkening
-Grade: Claret & Southworth (2022), A&A 664, A128 — ATLAS plane-parallel
+Limb darkening coefficient interpolator
+Grid: Claret & Southworth (2022), A&A 664, A128 — ATLAS plane-parallel
 
-Tabelas (parquet):
+Tables (parquet):
   table1.parquet — Gaia (BP, G, RP), Kepler, TESS       → power-2 (g, h)
   table2.parquet — SDSS (u, g, r, i, z)                 → power-2 (g, h)
   table3.parquet — uvby, Johnson UBVRI, 2MASS JHK        → power-2 (g, h)
 
-Lei única: power-2
+Single law: power-2
   I(mu)/I(1) = 1 - g*(1 - mu^h)
 
-Referência:
+Reference:
   Claret, A. & Southworth, J. (2022)
   A&A 664, A128
   https://doi.org/10.1051/0004-6361/202244278
@@ -25,7 +25,7 @@ from scipy.interpolate import LinearNDInterpolator
 
 _TABLES_DIR = os.path.join(os.path.dirname(__file__), '..', 'tables', 'claret2022')
 
-# Mapa passband → (arquivo, coluna_g, coluna_h)
+# Map: passband → (file, g_column, h_column)
 _PASSBAND_MAP = {
     # table1
     'TESS'      : ('table1.parquet', 'gT',  'hT'),
@@ -60,13 +60,13 @@ _VALID_LAWS      = ['power2']
 
 class Claret2022Grid:
     """
-    Interpolador tri-linear (Teff, logg, [Fe/H]) para coeficientes power-2
-    de Claret & Southworth (2022).
+    Tri-linear interpolator (Teff, logg, [Fe/H]) for power-2 coefficients
+    from Claret & Southworth (2022).
 
-    Parâmetros
+    Parameters
     ----------
-    passband : str   — ver _VALID_PASSBANDS
-    xi       : float — microturbulência km/s (0, 1, 2, 4, 8); default 2.0
+    passband : str   — see _VALID_PASSBANDS
+    xi       : float — microturbulence in km/s (0, 1, 2, 4, 8); default 2.0
     verbose  : bool
     """
 
@@ -74,12 +74,12 @@ class Claret2022Grid:
         self.passband = passband
         self.xi       = xi
         self.verbose  = verbose
-        self.law      = 'power2'   # única lei desta grade
+        self.law      = 'power2'   # only law available in this grid
 
         if self.passband not in _PASSBAND_MAP:
             raise ValueError(
-                f"passband='{self.passband}' não suportado para Claret & Southworth 2022.\n"
-                f"Opções: {_VALID_PASSBANDS}"
+                f"passband='{self.passband}' is not supported for Claret & Southworth 2022.\n"
+                f"Available options: {_VALID_PASSBANDS}"
             )
 
         self._table_file, self._col_g, self._col_h = _PASSBAND_MAP[self.passband]
@@ -88,36 +88,36 @@ class Claret2022Grid:
         self._load_table()
         self._build_interpolator()
 
-    # ── Carregamento ──────────────────────────────────────────────────────────
+    # ── Table loading ─────────────────────────────────────────────────────────
     def _load_table(self):
         if not os.path.exists(self._filepath):
             raise FileNotFoundError(
-                f"Tabela não encontrada: {self._filepath}\n"
-                f"Verifique se as tabelas foram instaladas corretamente com o pacote."
+                f"Table not found: {self._filepath}\n"
+                f"Please verify that the tables were correctly installed with the package."
             )
 
         df = pd.read_parquet(self._filepath)
 
-        # Filtra xi (coluna Vel)
+        # Filter by xi (column Vel)
         if 'Vel' in df.columns:
             avail_xi = sorted(df['Vel'].unique())
             df = df[df['Vel'] == self.xi].reset_index(drop=True)
             if len(df) == 0:
                 raise ValueError(
-                    f"xi={self.xi} não disponível.\n"
-                    f"Valores disponíveis: {avail_xi}"
+                    f"xi={self.xi} is not available.\n"
+                    f"Available values: {avail_xi}"
                 )
 
-        # Verifica colunas
+        # Check required columns
         required = ['Teff', 'logg', 'Z', self._col_g, self._col_h]
         missing  = [c for c in required if c not in df.columns]
         if missing:
             raise KeyError(
-                f"Colunas ausentes na tabela Claret & Southworth 2022: {missing}\n"
-                f"Colunas disponíveis: {list(df.columns)}"
+                f"Missing columns in Claret & Southworth 2022 table: {missing}\n"
+                f"Available columns: {list(df.columns)}"
             )
 
-        # Remove NaN nos coeficientes
+        # Drop NaN in coefficient columns
         df = df.dropna(subset=[self._col_g, self._col_h]).reset_index(drop=True)
 
         self._df   = df
@@ -130,13 +130,13 @@ class Claret2022Grid:
         if self.verbose:
             print('=' * 62)
             print(f'CLARET & SOUTHWORTH (2022)  |  ATLAS  |  {self.passband}  |  power-2')
-            print(f'xi={self.xi} km/s  |  Coeficientes: [{self._col_g}, {self._col_h}]  |  Pontos: {len(self._Teff)}')
+            print(f'xi={self.xi} km/s  |  Coefficients: [{self._col_g}, {self._col_h}]  |  Points: {len(self._Teff)}')
             print(f'Teff : [{self._Teff.min():.0f} – {self._Teff.max():.0f}] K')
             print(f'logg : [{self._logg.min():.1f} – {self._logg.max():.1f}]')
             print(f'[Fe/H]: [{self._feh.min():.2f} – {self._feh.max():.2f}]')
             print('=' * 62)
 
-    # ── Interpolador ──────────────────────────────────────────────────────────
+    # ── Interpolator ──────────────────────────────────────────────────────────
     def _build_interpolator(self):
         pts = np.column_stack((self._Teff, self._logg, self._feh))
         self._interp_g = LinearNDInterpolator(pts, self._g)
@@ -145,31 +145,31 @@ class Claret2022Grid:
         self.logg_min, self.logg_max = self._logg.min(), self._logg.max()
         self.feh_min,  self.feh_max  = self._feh.min(),  self._feh.max()
 
-    # ── Interpolação ──────────────────────────────────────────────────────────
+    # ── Interpolation ─────────────────────────────────────────────────────────
     def get_coefficients(self, teff, logg, feh):
         """
-        Interpola coeficientes power-2 (g, h).
+        Interpolate power-2 coefficients (g, h).
 
-        Parâmetros
+        Parameters
         ----------
-        teff : float — Temperatura efetiva (K)
-        logg : float — log g superficial
-        feh  : float — Metalicidade [Fe/H]
+        teff : float — Effective temperature (K)
+        logg : float — Surface gravity log g
+        feh  : float — Metallicity [Fe/H]
 
-        Retorno
+        Returns
         -------
         list[float] — [g, h]
         """
         errs = []
         if not (self.teff_min <= teff <= self.teff_max):
-            errs.append(f"Teff={teff:.0f} fora de [{self.teff_min:.0f}, {self.teff_max:.0f}] K")
+            errs.append(f"Teff={teff:.0f} outside [{self.teff_min:.0f}, {self.teff_max:.0f}] K")
         if not (self.logg_min <= logg <= self.logg_max):
-            errs.append(f"logg={logg:.2f} fora de [{self.logg_min:.1f}, {self.logg_max:.1f}]")
+            errs.append(f"logg={logg:.2f} outside [{self.logg_min:.1f}, {self.logg_max:.1f}]")
         if not (self.feh_min <= feh <= self.feh_max):
-            errs.append(f"[Fe/H]={feh:.2f} fora de [{self.feh_min:.2f}, {self.feh_max:.2f}]")
+            errs.append(f"[Fe/H]={feh:.2f} outside [{self.feh_min:.2f}, {self.feh_max:.2f}]")
         if errs:
             raise ValueError(
-                "Parâmetros fora da grade Claret & Southworth 2022:\n  " + "\n  ".join(errs)
+                "Parameters outside the Claret & Southworth 2022 grid limits:\n  " + "\n  ".join(errs)
             )
 
         g_val = float(np.atleast_1d(self._interp_g(teff, logg, feh))[0])
@@ -177,20 +177,20 @@ class Claret2022Grid:
 
         if np.isnan(g_val) or np.isnan(h_val):
             raise ValueError(
-                f"Interpolação retornou NaN para Teff={teff}, logg={logg}, [Fe/H]={feh}.\n"
-                f"O ponto pode estar em região sem cobertura da grade."
+                f"Interpolation returned NaN for Teff={teff}, logg={logg}, [Fe/H]={feh}.\n"
+                f"The point may lie in a region not covered by the grid."
             )
         return [g_val, h_val]
 
-    # ── Método estático chamado pelo __init__.py ──────────────────────────────
+    # ── Static method called by __init__.py ───────────────────────────────────
     @staticmethod
     def interpolate(teff, logg, feh, passband='TESS', xi=2.0, verbose=False, **kwargs):
         """
-        Interface estática para chamada pelo meidem.__init__.
+        Static interface for calls from meidem.__init__.
 
-        Retorno
+        Returns
         -------
-        tuple(list[float], dict) — (coeficientes, metadados)
+        tuple(list[float], dict) — (coefficients, metadata)
         """
         grid   = Claret2022Grid(passband=passband, xi=xi, verbose=verbose)
         coeffs = grid.get_coefficients(teff, logg, feh)

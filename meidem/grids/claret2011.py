@@ -1,10 +1,10 @@
 """
 meidem/grids/claret2011.py
 ===========================
-Interpolador de coeficientes de limb darkening
-Grade: Claret & Bloemen (2011), A&A 529, A75
+Limb darkening coefficient interpolator
+Grid: Claret & Bloemen (2011), A&A 529, A75
 
-Tabelas (parquet):
+Tables (parquet):
   table-af.parquet  → quadratic (a, b), root-square (c, d), logarithmic (e, f)
   tableeq5.parquet  → 4coeff (a1, a2, a3, a4)
   tableu.parquet    → linear (u)
@@ -12,10 +12,10 @@ Tabelas (parquet):
 
 Passbands: Kepler (Kp), CoRoT (C), Spitzer ch1 (S1), Spitzer ch2 (S2)
 
-Método: "L" = Least-Squares  |  "F" = Flux Conservation
-Modelo: "A" = ATLAS           |  "P" = PHOENIX
+Method: "L" = Least-Squares  |  "F" = Flux Conservation
+Model:  "A" = ATLAS           |  "P" = PHOENIX
 
-Referência:
+Reference:
   Claret, A. & Bloemen, S. (2011)
   A&A 529, A75
   https://doi.org/10.1051/0004-6361/201116451
@@ -61,14 +61,15 @@ _VALID_MOD       = {'A', 'P'}
 
 class Claret2011Grid:
     """
-    Interpolador tri-linear (Teff, logg, Z) para LD Claret & Bloemen (2011).
+    Tri-linear interpolator (Teff, logg, Z) for LD coefficients
+    from Claret & Bloemen (2011).
 
-    Parâmetros
+    Parameters
     ----------
     law      : str   — 'quadratic' (default) | 'root-square' | 'logarithmic' |
                        '4coeff' | 'linear' | 'y'
     passband : str   — 'Kp' (Kepler) | 'C' (CoRoT) | 'S1' | 'S2' (Spitzer)
-    xi       : float — microturbulência km/s (default 2.0)
+    xi       : float — microturbulence in km/s (default 2.0)
     met      : str   — 'L' (Least-Squares, default) | 'F' (Flux Conservation)
     mod      : str   — 'A' (ATLAS, default) | 'P' (PHOENIX)
     verbose  : bool
@@ -85,48 +86,48 @@ class Claret2011Grid:
 
         if self.law not in _LAW_TABLE_MAP:
             raise ValueError(
-                f"law='{self.law}' não suportada para Claret & Bloemen 2011.\n"
-                f"Opções: {_VALID_LAWS}"
+                f"law='{self.law}' is not supported for Claret & Bloemen 2011.\n"
+                f"Available options: {_VALID_LAWS}"
             )
         if self.passband not in _PASSBAND_MAP:
             raise ValueError(
-                f"passband='{self.passband}' não suportado para Claret & Bloemen 2011.\n"
-                f"Opções: {_VALID_PASSBANDS}"
+                f"passband='{self.passband}' is not supported for Claret & Bloemen 2011.\n"
+                f"Available options: {_VALID_PASSBANDS}"
             )
         if self.met not in _VALID_MET:
-            raise ValueError(f"met='{self.met}' inválido. Use 'L' (Least-Squares) ou 'F' (Flux Conservation).")
+            raise ValueError(f"met='{self.met}' is invalid. Use 'L' (Least-Squares) or 'F' (Flux Conservation).")
         if self.mod not in _VALID_MOD:
-            raise ValueError(f"mod='{self.mod}' inválido. Use 'A' (ATLAS) ou 'P' (PHOENIX).")
+            raise ValueError(f"mod='{self.mod}' is invalid. Use 'A' (ATLAS) or 'P' (PHOENIX).")
 
         self._filepath  = os.path.join(_TABLES_DIR, _LAW_TABLE_MAP[self.law])
         self._col_names = list(_LAW_COLUMNS[self.law])
         self._load_table()
         self._build_interpolator()
 
-    # ── Carregamento ──────────────────────────────────────────────────────────
+    # ── Table loading ─────────────────────────────────────────────────────────
     def _load_table(self):
         if not os.path.exists(self._filepath):
             raise FileNotFoundError(
-                f"Tabela não encontrada: {self._filepath}\n"
-                f"Verifique se as tabelas foram instaladas corretamente com o pacote."
+                f"Table not found: {self._filepath}\n"
+                f"Please verify that the tables were correctly installed with the package."
             )
 
         df = pd.read_parquet(self._filepath)
 
-        # Filtro: xi
+        # Filter by xi
         if 'xi' in df.columns:
             df = df[df['xi'] == self.xi]
 
-        # Filtro: passband
+        # Filter by passband
         filt = _PASSBAND_MAP[self.passband]
         if 'Filt' in df.columns:
             df = df[df['Filt'] == filt]
 
-        # Filtro: método (Met)
+        # Filter by method (Met)
         if 'Met' in df.columns:
             df = df[df['Met'] == self.met]
 
-        # Filtro: modelo (Mod)
+        # Filter by model (Mod)
         if 'Mod' in df.columns:
             df = df[df['Mod'] == self.mod]
 
@@ -134,20 +135,20 @@ class Claret2011Grid:
 
         if len(df) == 0:
             raise ValueError(
-                f"Nenhum dado encontrado para passband='{self.passband}', "
+                f"No data found for passband='{self.passband}', "
                 f"xi={self.xi}, met='{self.met}', mod='{self.mod}'.\n"
-                f"Verifique os parâmetros e a tabela disponível."
+                f"Please check the parameters and the available table."
             )
 
-        # Verifica colunas
+        # Check required columns
         missing = [c for c in self._col_names if c not in df.columns]
         if missing:
             raise KeyError(
-                f"Colunas ausentes na tabela Claret & Bloemen 2011: {missing}\n"
-                f"Colunas disponíveis: {list(df.columns)}"
+                f"Missing columns in Claret & Bloemen 2011 table: {missing}\n"
+                f"Available columns: {list(df.columns)}"
             )
 
-        # Remove NaN nos coeficientes
+        # Drop NaN in coefficient columns
         df = df.dropna(subset=self._col_names).reset_index(drop=True)
 
         self._df     = df
@@ -161,16 +162,16 @@ class Claret2011Grid:
             met_lbl = 'Least-Squares' if self.met == 'L' else 'Flux Conservation'
             print('=' * 62)
             print(f'CLARET & BLOEMEN (2011)  |  {self.passband}  |  {self.law}')
-            print(f'Modelo: {mod_lbl}  |  Método: {met_lbl}  |  xi={self.xi} km/s')
-            print(f'Coeficientes: {self._col_names}  |  Pontos: {len(self._Teff)}')
+            print(f'Model: {mod_lbl}  |  Method: {met_lbl}  |  xi={self.xi} km/s')
+            print(f'Coefficients: {self._col_names}  |  Points: {len(self._Teff)}')
             print(f'Teff : [{self._Teff.min():.0f} – {self._Teff.max():.0f}] K')
             print(f'logg : [{self._logg.min():.1f} – {self._logg.max():.1f}]')
             print(f'[Fe/H]: [{self._feh.min():.2f} – {self._feh.max():.2f}]')
             print('=' * 62)
 
-    # ── Interpolador ──────────────────────────────────────────────────────────
+    # ── Interpolator ──────────────────────────────────────────────────────────
     def _build_interpolator(self):
-        # Se Z é constante (ex: PHOENIX Z=0), usa interpolador 2D (Teff, logg)
+        # If Z is constant (e.g. PHOENIX Z=0), use 2D interpolator (Teff, logg)
         self._feh_fixed = None
         if len(np.unique(self._feh)) == 1:
             self._feh_fixed = self._feh[0]
@@ -183,34 +184,34 @@ class Claret2011Grid:
         self.logg_min, self.logg_max = self._logg.min(), self._logg.max()
         self.feh_min,  self.feh_max  = self._feh.min(),  self._feh.max()
 
-    # ── Interpolação ──────────────────────────────────────────────────────────
+    # ── Interpolation ─────────────────────────────────────────────────────────
     def get_coefficients(self, teff, logg, feh):
         """
-        Interpola coeficientes LD.
+        Interpolate LD coefficients.
 
-        Parâmetros
+        Parameters
         ----------
-        teff : float — Temperatura efetiva (K)
-        logg : float — log g superficial
-        feh  : float — Metalicidade [Fe/H]
+        teff : float — Effective temperature (K)
+        logg : float — Surface gravity log g
+        feh  : float — Metallicity [Fe/H]
 
-        Retorno
+        Returns
         -------
         list[float]
         """
         errs = []
         if not (self.teff_min <= teff <= self.teff_max):
-            errs.append(f"Teff={teff:.0f} fora de [{self.teff_min:.0f}, {self.teff_max:.0f}] K")
+            errs.append(f"Teff={teff:.0f} outside [{self.teff_min:.0f}, {self.teff_max:.0f}] K")
         if not (self.logg_min <= logg <= self.logg_max):
-            errs.append(f"logg={logg:.2f} fora de [{self.logg_min:.1f}, {self.logg_max:.1f}]")
+            errs.append(f"logg={logg:.2f} outside [{self.logg_min:.1f}, {self.logg_max:.1f}]")
         if not (self.feh_min <= feh <= self.feh_max):
-            errs.append(f"[Fe/H]={feh:.2f} fora de [{self.feh_min:.2f}, {self.feh_max:.2f}]")
+            errs.append(f"[Fe/H]={feh:.2f} outside [{self.feh_min:.2f}, {self.feh_max:.2f}]")
         if errs:
             raise ValueError(
-                "Parâmetros fora da grade Claret & Bloemen 2011:\n  " + "\n  ".join(errs)
+                "Parameters outside the Claret & Bloemen 2011 grid limits:\n  " + "\n  ".join(errs)
             )
 
-        # Grade PHOENIX: Z fixo → interpolação 2D (Teff, logg)
+        # PHOENIX grid: fixed Z → 2D interpolation (Teff, logg)
         if self._feh_fixed is not None:
             result = [float(np.atleast_1d(f(teff, logg))[0]) for f in self._interps]
         else:
@@ -218,21 +219,21 @@ class Claret2011Grid:
 
         if any(np.isnan(v) for v in result):
             raise ValueError(
-                f"Interpolação retornou NaN para Teff={teff}, logg={logg}, [Fe/H]={feh}.\n"
-                f"O ponto pode estar em região sem cobertura da grade."
+                f"Interpolation returned NaN for Teff={teff}, logg={logg}, [Fe/H]={feh}.\n"
+                f"The point may lie in a region not covered by the grid."
             )
         return result
 
-    # ── Método estático chamado pelo __init__.py ──────────────────────────────
+    # ── Static method called by __init__.py ───────────────────────────────────
     @staticmethod
     def interpolate(teff, logg, feh, passband='Kp', law='quadratic',
                     xi=2.0, met='L', mod='A', verbose=False, **kwargs):
         """
-        Interface estática para chamada pelo meidem.__init__.
+        Static interface for calls from meidem.__init__.
 
-        Retorno
+        Returns
         -------
-        tuple(list[float], dict) — (coeficientes, metadados)
+        tuple(list[float], dict) — (coefficients, metadata)
         """
         grid   = Claret2011Grid(law=law, passband=passband, xi=xi,
                                 met=met, mod=mod, verbose=verbose)
