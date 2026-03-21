@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Necessário para contar commits
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -21,27 +21,46 @@ jobs:
 
     - name: Increment version
       run: |
-        # Lê a versão atual
-        VERSION=$(grep "version" pyproject.toml | head -1 | grep -oP '\d+\.\d+\.\d+')
-        echo "Versão atual: $VERSION"
+        python << 'PYTHON_SCRIPT'
+        import re
         
-        # Incrementa patch (1.0.0 → 1.0.1)
-        NEW_VERSION=$(python -c "v='$VERSION'.split('.'); print(f'{v[0]}.{v[1]}.{int(v[2])+1}')")
-        echo "Nova versão: $NEW_VERSION"
+        # Lê o arquivo
+        with open('pyproject.toml', 'r') as f:
+            content = f.read()
         
-        # Substitui no pyproject.toml
-        sed -i "s/version = \"$VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
-        
-        # Salva pra usar depois
-        echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        # Extrai versão atual
+        match = re.search(r'version\s*=\s*"(\d+\.\d+\.(\d+))"', content)
+        if match:
+            current = match.group(1)
+            patch = int(match.group(2))
+            
+            # Incrementa patch
+            new_version = current.replace(str(patch), str(patch + 1))
+            
+            # Substitui
+            new_content = content.replace(f'version = "{current}"', f'version = "{new_version}"')
+            
+            with open('pyproject.toml', 'w') as f:
+                f.write(new_content)
+            
+            print(f"Version updated: {current} → {new_version}")
+            
+            # Salva pra usar depois
+            with open('version.txt', 'w') as f:
+                f.write(new_version)
+        PYTHON_SCRIPT
+
+    - name: Read version
+      id: version
+      run: echo "NEW_VERSION=$(cat version.txt)" >> $GITHUB_OUTPUT
 
     - name: Commit version change
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions@github.com"
         git add pyproject.toml
-        git commit -m "chore: bump version to ${{ env.NEW_VERSION }}"
-        git push
+        git commit -m "chore: bump version to ${{ steps.version.outputs.NEW_VERSION }}" || echo "No changes to commit"
+        git push || echo "Nothing to push"
 
     - name: Install dependencies
       run: |
