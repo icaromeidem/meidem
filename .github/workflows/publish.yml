@@ -14,7 +14,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # necessário para setuptools-scm ler as tags
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --tags --force
 
       - name: Set up Python
         uses: actions/setup-python@v5
