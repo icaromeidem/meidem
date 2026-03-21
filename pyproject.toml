@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name    = "meidem"
-version = "1.0.0"
+version = "1.0.6"
 description = "Multi-grid Epic Interpolator for limb DarkEning Models"
 readme      = "README.md"
 license     = {file = "LICENSE"}

@@ -2,11 +2,12 @@
 bump_version.py
 ---------------
 Reads the latest Git tag and writes the version to meidem/_version.py
-Run before building: python bump_version.py
+and pyproject.toml. Run before building: python bump_version.py
 """
 
 import subprocess
 import pathlib
+import re
 
 def get_version():
     result = subprocess.run(
@@ -19,5 +20,12 @@ def get_version():
     return tag[1:]  # remove o 'v'
 
 version = get_version()
+
+# atualiza _version.py
 pathlib.Path("meidem/_version.py").write_text(f'__version__ = "{version}"\n')
+
+# atualiza pyproject.toml
+p = pathlib.Path("pyproject.toml")
+p.write_text(re.sub(r'^version = ".*"', f'version = "{version}"', p.read_text(), flags=re.MULTILINE))
+
 print(f"✓ version set to {version}")
