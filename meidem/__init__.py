@@ -61,6 +61,9 @@ __all__ = [
     'available_passbands',
 ]
 
+# Cache to store already-loaded interpolators for faster MCMC and Grid Searches
+_GRID_CACHE = {}
+
 # ── Grid registry ─────────────────────────────────────────────────────────────
 
 _GRIDS = {
@@ -120,7 +123,7 @@ def get_ld_coefficients(
     passband,
     grid    = 'kostogryz2022',
     law     = None,
-    xi      = _XI_DEFAULT,   # ← sentinel em vez de 2.0
+    xi      = _XI_DEFAULT,   
     met     = 'L',
     mod     = 'A',
     verbose = False,
@@ -131,85 +134,7 @@ def get_ld_coefficients(
 
     Parameters
     ----------
-    teff     : float
-        Stellar effective temperature (K).
-    logg     : float
-        Surface gravity log g (cgs).
-    feh      : float
-        Metallicity [Fe/H] (dex).
-    passband : str
-        Photometric passband. Depends on the chosen grid.
-        E.g.: 'TESS', 'Kepler', 'Gaia_G', 'Kp', 'C'
-    grid     : str, optional
-        LD coefficient grid. Default: 'kostogryz2022'.
-        Options: 'kostogryz2022', 'claret2022', 'claret2017', 'claret2011'
-    law      : str or None, optional
-        Limb darkening law. If None, uses the grid default:
-          - kostogryz2022 → 'power2'
-          - claret2022    → 'power2'
-          - claret2017    → 'quadratic'
-          - claret2011    → 'quadratic'
-    xi       : float, optional
-        Microturbulence in km/s (ATLAS only). Default: 2.0.
-        Available values: 0, 1, 2, 4, 8.
-        Always set explicitly — if omitted, a UserWarning is emitted.
-    met      : str, optional
-        Fitting method (Claret 2017/2011 only).
-        'L' = Least-Squares (default) | 'F' = Flux Conservation
-    mod      : str, optional
-        Atmospheric model (Claret 2017/2011 only).
-        'A' = ATLAS (default) | 'P' = PHOENIX
-    verbose  : bool, optional
-        If True, prints grid info and coefficients. Default: False.
-
-    Returns
-    -------
-    dict with keys:
-        'coefficients' : list[float]  — interpolated LD coefficients
-        'n_coeffs'     : int          — number of coefficients
-        'law'          : str          — LD law used
-        'passband'     : str          — passband used
-        'grid'         : str          — grid used
-        'reference'    : str          — bibliographic reference
-        'doi'          : str          — paper DOI
-        'teff_input'   : float        — input Teff
-        'logg_input'   : float        — input logg
-        'feh_input'    : float        — input [Fe/H]
-        'xi'           : float|None   — microturbulence (None if PHOENIX or kostogryz2022)
-        'met'          : str|None     — fitting method (None if not applicable)
-        'mod'          : str|None     — atmospheric model (None if not applicable)
-
-    Examples
-    --------
-    >>> import meidem
-
-    >>> # Kostogryz+2022 — power-2 for TESS
-    >>> r = meidem.get_ld_coefficients(5778, 4.44, 0.0, 'TESS', grid='kostogryz2022', law='power2')
-    >>> r['coefficients']
-    [0.412, 0.631]
-
-    >>> # Claret & Southworth 2022 — power-2 for Kepler
-    >>> r = meidem.get_ld_coefficients(5778, 4.44, 0.0, 'Kepler', grid='claret2022', xi=2.0)
-    >>> r['coefficients']
-    [0.398, 0.618]
-
-    >>> # Claret 2017 — quadratic for TESS, ATLAS, Least-Squares
-    >>> r = meidem.get_ld_coefficients(5778, 4.44, 0.0, 'TESS',
-    ...     grid='claret2017', law='quadratic', mod='A', met='L', xi=2.0)
-    >>> r['coefficients']
-    [0.321, 0.287]
-
-    >>> # Claret & Bloemen 2011 — quadratic for Kepler
-    >>> r = meidem.get_ld_coefficients(5778, 4.44, 0.0, 'Kp',
-    ...     grid='claret2011', law='quadratic', xi=2.0)
-    >>> r['coefficients']
-    [0.415, 0.295]
-
-    Raises
-    ------
-    ValueError
-        If the grid, law, or passband are not supported, or if the stellar
-        parameters are outside the grid limits.
+    # ... (A SUA DOCSTRING INTACTA AQUI) ...
     """
 
     # ── 1. Normalise and validate grid ────────────────────────
@@ -247,25 +172,29 @@ def get_ld_coefficients(
     if law is None:
         law = _default_law[grid]
 
-    # ── 4. Instantiate interpolator and get coefficients ──────
+    # ── 4. Get from Cache or Instantiate Interpolator ─────────
     InterpolatorClass = grid_info['class']
+    
+    
+    cache_key = (grid, passband, law, xi, met, mod)
 
-    common_kwargs = dict(teff=teff, logg=logg, feh=feh, verbose=verbose)
+    if cache_key not in _GRID_CACHE:
+        if grid == 'kostogryz2022':
+            obj = InterpolatorClass(passband=passband, law=law, verbose=verbose)
+        elif grid == 'claret2022':
+            obj = InterpolatorClass(passband=passband, xi=xi, verbose=verbose)
+        elif grid == 'claret2017':
+            obj = InterpolatorClass(law=law, xi=xi, met=met, mod=mod, verbose=verbose)
+        elif grid == 'claret2011':
+            obj = InterpolatorClass(law=law, passband=passband, xi=xi, met=met, mod=mod, verbose=verbose)
+        
+        _GRID_CACHE[cache_key] = obj
+    else:
+        pass
 
-    if grid == 'kostogryz2022':
-        coeffs, meta = InterpolatorClass.interpolate(
-            passband=passband, law=law, **common_kwargs)
-    elif grid == 'claret2022':
-        coeffs, meta = InterpolatorClass.interpolate(
-            passband=passband, xi=xi, **common_kwargs)
-    elif grid == 'claret2017':
-        coeffs, meta = InterpolatorClass.interpolate(
-            passband=passband, law=law, xi=xi, met=met, mod=mod, **common_kwargs)
-    elif grid == 'claret2011':
-        coeffs, meta = InterpolatorClass.interpolate(
-            passband=passband, law=law, xi=xi, met=met, mod=mod, **common_kwargs)
+    cached_grid = _GRID_CACHE[cache_key]
+    coeffs = cached_grid.get_coefficients(teff, logg, feh)
 
-    # ── 5. Build standardised return dict ────────────────────
     _uses_atlas_xi = grid in _ATLAS_GRIDS and mod.upper() == 'A'
     _uses_claret   = grid in ('claret2017', 'claret2011')
 
@@ -282,74 +211,12 @@ def get_ld_coefficients(
         'feh_input'   : feh,
         'xi'          : xi  if _uses_atlas_xi else None,
         'met'         : met if _uses_claret   else None,
-        'mod' : mod if _uses_claret else ('A' if grid == 'claret2022' else None),    
+        'mod'         : mod if _uses_claret else ('A' if grid == 'claret2022' else None),    
     }
 
 
-# ── Discovery functions ───────────────────────────────────────────────────────
 
 def available_grids(verbose=True):
     """
     List all LD grids available in MEIDEM.
-
-    Returns
-    -------
-    list[str] — names of available grids
-    """
-    if verbose:
-        print("=" * 65)
-        print("MEIDEM — Available Limb Darkening Grids")
-        print("=" * 65)
-        for name, info in _GRIDS.items():
-            print(f"\n  [{name}]")
-            print(f"    Reference : {info['reference']}")
-            print(f"    Model     : {info['model']}")
-            print(f"    Laws      : {info['laws']}")
-            print(f"    Passbands : {info['passbands']}")
-            xi_str = str(info['xi']) + " km/s" if info['xi'] else "not applicable"
-            print(f"    xi (km/s) : {xi_str}")
-            print(f"    DOI       : {info['doi']}")
-        print("=" * 65)
-    return list(_GRIDS.keys())
-
-
-def available_laws(grid, verbose=True):
-    """
-    List the LD laws available for a specific grid.
-
-    Parameters
-    ----------
-    grid : str — grid name
-
-    Returns
-    -------
-    list[str]
-    """
-    grid = grid.lower()
-    if grid not in _GRIDS:
-        raise ValueError(f"Grid '{grid}' not found. Use available_grids().")
-    laws = _GRIDS[grid]['laws']
-    if verbose:
-        print(f"Available laws for '{grid}': {laws}")
-    return laws
-
-
-def available_passbands(grid, verbose=True):
-    """
-    List the passbands available for a specific grid.
-
-    Parameters
-    ----------
-    grid : str — grid name
-
-    Returns
-    -------
-    list[str]
-    """
-    grid = grid.lower()
-    if grid not in _GRIDS:
-        raise ValueError(f"Grid '{grid}' not found. Use available_grids().")
-    passbands = _GRIDS[grid]['passbands']
-    if verbose:
-        print(f"Available passbands for '{grid}': {passbands}")
-    return passbands
+    ...
