@@ -1,0 +1,91 @@
+cff-version: 1.2.0
+message: "If you use MEIDEM in your research, please cite it using the metadata below."
+
+title: "MEIDEM: Multi-grid Epic Interpolator for limb DarkEning Models"
+version: 1.0.8
+date-released: "2026-05-14"
+
+authors:
+  - family-names: Meidem
+    given-names: Icaro
+    affiliation: "Observatório Nacional"   
+    orcid: "https://orcid.org/0000-0001-5331-4810"  
+
+  - family-names: Emilio
+    given-names: Marcelo
+    affiliation: "Universidade Estadual de Ponta Grossa"   
+    orcid: "https://orcid.org/0000-0001-5589-9015"  
+
+repository-code: "https://github.com/icaromeidem/meidem"
+url: "https://pypi.org/project/meidem/"
+license: MIT
+
+abstract: >
+  When modeling exoplanet transits, accurately accounting for stellar limb darkening (LD) is essential for the precise determination 
+  of planetary radii and orbital parameters. LD coefficients are typically derived by interpolating tabulated grids based on stellar 
+  atmospheric models. However, managing heterogeneous table formats, distinct interpolation strategies, and manual data downloads across 
+  different publications can be cumbersome and error-prone.
+  
+  MEIDEM (Multi-grid Epic Interpolator for stellar limb DarkEning Models) is an open-source Python package designed to solve this problem. 
+  It provides a single, unified interface to interpolate LD coefficients from multiple published grids for any given set of stellar 
+  parameters (effective temperature, surface gravity, metallicity, and microturbulence). All data tables are pre-bundled within the package,
+  eliminating the need for manual downloads or path configurations.
+  
+  Currently, MEIDEM supports several standard reference grids in the exoplanet literature, including Kostogryz et al. (2022) and multiple 
+  Claret grids (2011, 2017, 2022). It seamlessly handles various atmospheric models (ATLAS, PHOENIX, MPS-ATLAS), multiple LD laws 
+  (e.g., power-2, quadratic, non-linear, 4-coefficient), and a wide array of photometric passbands (including TESS, Kepler, CHEOPS, 
+  PLATO, Gaia, and SDSS). By abstracting the data-handling complexities, MEIDEM ensures reproducible, fast, and physically consistent 
+  limb darkening calculations for exoplanet transit modeling and stellar astrophysics workflows.
+
+keywords:
+  - astronomy
+  - limb darkening
+  - stellar atmosphere
+  - exoplanets
+  - transit photometry
+  - TESS
+  - Kepler
+
+references:
+  - type: article
+    title: "Limb-darkening coefficients for the TESS satellite"
+    authors:
+      - family-names: Claret
+        given-names: Antonio
+    journal: "Astronomy & Astrophysics"
+    volume: 600
+    year: 2017
+    doi: "10.1051/0004-6361/201629705"
+
+  - type: article
+    title: "Limb-darkening coefficients for in the TESS and Kepler passbands"
+    authors:
+      - family-names: Claret
+        given-names: Antonio
+      - family-names: Southworth
+        given-names: John
+    journal: "Astronomy & Astrophysics"
+    volume: 664
+    year: 2022
+    doi: "10.1051/0004-6361/202244278"
+
+  - type: article
+    title: "Limb-darkening and gravity-darkening coefficients for the TESS satellite at several metallicities, surface gravities, and microturbulence velocities"
+    authors:
+      - family-names: Kostogryz
+        given-names: Nadiia V.
+    journal: "Astronomy & Astrophysics"
+    year: 2022
+    doi: "10.1051/0004-6361/202140376"
+
+  - type: article
+    title: "Gravity and limb-darkening coefficients for the Kepler, CoRoT, Spitzer, uvby, UBVRIJHK, and Sloan photometric systems"
+    authors:
+      - family-names: Claret
+        given-names: Antonio
+      - family-names: Bloemen
+        given-names: Steven
+    journal: "Astronomy & Astrophysics"
+    volume: 529
+    year: 2011
+    doi: "10.1051/0004-6361/201116451"
