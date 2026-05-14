@@ -4,6 +4,7 @@ message: "If you use MEIDEM in your research, please cite it using the metadata 
 title: "MEIDEM: Multi-grid Epic Interpolator for limb DarkEning Models"
 version: 1.0.8
 date-released: "2026-05-14"
+doi: "10.5281/zenodo.20189894"
 
 authors:
   - family-names: Meidem
