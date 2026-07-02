@@ -299,6 +299,8 @@ def get_ld_coefficients(
         'claret2022'   : 'power2',
         'claret2017'   : 'quadratic',
         'claret2011'   : 'quadratic',
+        'claret2025'   : 'power2',     
+        'magic2013'    : 'quadratic',
     }
     if law is None:
         law = _default_law[grid]

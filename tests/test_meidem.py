@@ -265,20 +265,176 @@ class TestClaret2011:
         assert r['law'] == 'quadratic'
 
 
-# ── API general ───────────────────────────────────────────────────────────────
-
+# ── claret2025 ────────────────────────────────────────────────────────────────
+ 
+class TestClaret2025:
+ 
+    def test_power2_f277w(self):
+        r = meidem.get_ld_coefficients(
+            **SUN, passband='F277W', grid='claret2025', law='power2')
+        _check_result(r, n_coeffs_expected=2, grid='claret2025',
+                      passband='F277W', law='power2')
+        assert r['xi']  is None
+        assert r['met'] is None
+ 
+    def test_power2_prism(self):
+        r = meidem.get_ld_coefficients(
+            **SUN, passband='PRISM', grid='claret2025', law='power2')
+        _check_result(r, n_coeffs_expected=2, grid='claret2025',
+                      passband='PRISM', law='power2')
+ 
+    def test_power2_soss1(self):
+        r = meidem.get_ld_coefficients(
+            **SUN, passband='SOSS1', grid='claret2025', law='power2')
+        _check_result(r, n_coeffs_expected=2, grid='claret2025',
+                      passband='SOSS1', law='power2')
+ 
+    def test_4coeff_f444w(self):
+        r = meidem.get_ld_coefficients(
+            **SUN, passband='F444W', grid='claret2025', law='4coeff')
+        _check_result(r, n_coeffs_expected=4, grid='claret2025',
+                      passband='F444W', law='4coeff')
+ 
+    def test_nircam_passbands(self):
+        for pb in ['F210M', 'F277W', 'F322W2', 'F444W']:
+            r = meidem.get_ld_coefficients(
+                **SUN, passband=pb, grid='claret2025', law='power2')
+            assert len(r['coefficients']) == 2
+            assert all(math.isfinite(c) for c in r['coefficients'])
+ 
+    def test_nirspec_passbands(self):
+        for pb in ['G235H', 'G235M', 'G395H', 'G395M', 'PRISM']:
+            r = meidem.get_ld_coefficients(
+                **SUN, passband=pb, grid='claret2025', law='power2')
+            assert len(r['coefficients']) == 2
+ 
+    def test_xi_none(self):
+        r = meidem.get_ld_coefficients(
+            **SUN, passband='F277W', grid='claret2025', law='power2')
+        assert r['xi'] is None
+ 
+    def test_feh_ignored(self):
+        # claret2025 does not parametrize [Fe/H] — both calls should return same result
+        r1 = meidem.get_ld_coefficients(
+            teff=5772, logg=4.438, feh=0.0,
+            passband='F277W', grid='claret2025', law='power2')
+        r2 = meidem.get_ld_coefficients(
+            teff=5772, logg=4.438, feh=-1.0,
+            passband='F277W', grid='claret2025', law='power2')
+        assert r1['coefficients'] == r2['coefficients']
+ 
+    def test_invalid_passband_raises(self):
+        with pytest.raises(ValueError):
+            meidem.get_ld_coefficients(
+                **SUN, passband='TESS', grid='claret2025')
+ 
+    def test_invalid_law_raises(self):
+        with pytest.raises(ValueError):
+            meidem.get_ld_coefficients(
+                **SUN, passband='F277W', grid='claret2025', law='quadratic')
+ 
+    def test_out_of_grid_raises(self):
+        with pytest.raises(ValueError):
+            meidem.get_ld_coefficients(
+                teff=99999, logg=4.44, feh=0.0,
+                passband='F277W', grid='claret2025', law='power2')
+ 
+ 
+# ── magic2013 ─────────────────────────────────────────────────────────────────
+ 
+# Star within the Magic2013 grid (Teff 3935-7053, logg 1.5-5.0, [Fe/H] -3.0 to 0.0)
+MAGIC_STAR = dict(teff=5777, logg=4.44, feh=0.0)
+ 
+ 
+class TestMagic2013:
+ 
+    def test_quadratic_kepler(self):
+        r = meidem.get_ld_coefficients(
+            **MAGIC_STAR, passband='Kepler', grid='magic2013', law='quadratic')
+        _check_result(r, n_coeffs_expected=2, grid='magic2013',
+                      passband='Kepler', law='quadratic', star=MAGIC_STAR)
+        assert r['xi']  is None
+        assert r['met'] is None
+        assert r['mod'] is None
+ 
+    def test_linear_kepler(self):
+        r = meidem.get_ld_coefficients(
+            **MAGIC_STAR, passband='Kepler', grid='magic2013', law='linear')
+        _check_result(r, n_coeffs_expected=1, grid='magic2013',
+                      passband='Kepler', law='linear', star=MAGIC_STAR)
+ 
+    def test_4coeff_kepler(self):
+        r = meidem.get_ld_coefficients(
+            **MAGIC_STAR, passband='Kepler', grid='magic2013', law='4coeff')
+        _check_result(r, n_coeffs_expected=4, grid='magic2013',
+                      passband='Kepler', law='4coeff', star=MAGIC_STAR)
+ 
+    def test_square_root_kepler(self):
+        r = meidem.get_ld_coefficients(
+            **MAGIC_STAR, passband='Kepler', grid='magic2013', law='square-root')
+        _check_result(r, n_coeffs_expected=2, grid='magic2013',
+                      passband='Kepler', law='square-root', star=MAGIC_STAR)
+ 
+    def test_sdss_r(self):
+        r = meidem.get_ld_coefficients(
+            **MAGIC_STAR, passband='SDSS_r', grid='magic2013', law='quadratic')
+        _check_result(r, n_coeffs_expected=2, grid='magic2013',
+                      passband='SDSS_r', law='quadratic', star=MAGIC_STAR)
+ 
+    def test_johnson_v(self):
+        r = meidem.get_ld_coefficients(
+            **MAGIC_STAR, passband='Johnson_V', grid='magic2013', law='quadratic')
+        _check_result(r, n_coeffs_expected=2, grid='magic2013',
+                      passband='Johnson_V', law='quadratic', star=MAGIC_STAR)
+ 
+    def test_corot(self):
+        r = meidem.get_ld_coefficients(
+            **MAGIC_STAR, passband='CoRoT', grid='magic2013', law='quadratic')
+        _check_result(r, n_coeffs_expected=2, grid='magic2013',
+                      passband='CoRoT', law='quadratic', star=MAGIC_STAR)
+ 
+    def test_xi_none(self):
+        r = meidem.get_ld_coefficients(
+            **MAGIC_STAR, passband='Kepler', grid='magic2013', law='quadratic')
+        assert r['xi'] is None
+ 
+    def test_out_of_grid_teff_raises(self):
+        with pytest.raises(ValueError):
+            meidem.get_ld_coefficients(
+                teff=9000, logg=4.44, feh=0.0,
+                passband='Kepler', grid='magic2013', law='quadratic')
+ 
+    def test_out_of_grid_feh_raises(self):
+        with pytest.raises(ValueError):
+            meidem.get_ld_coefficients(
+                teff=5777, logg=4.44, feh=0.5,
+                passband='Kepler', grid='magic2013', law='quadratic')
+ 
+    def test_invalid_passband_raises(self):
+        with pytest.raises(ValueError):
+            meidem.get_ld_coefficients(
+                **MAGIC_STAR, passband='TESS', grid='magic2013')
+ 
+    def test_invalid_law_raises(self):
+        with pytest.raises(ValueError):
+            meidem.get_ld_coefficients(
+                **MAGIC_STAR, passband='Kepler', grid='magic2013', law='logarithmic')
+ 
+ 
+ # ── API general ───────────────────────────────────────────────────────────────
+ 
 class TestAPI:
-
+ 
     def test_invalid_grid_raises(self):
         with pytest.raises(ValueError, match="not supported"):
             meidem.get_ld_coefficients(
                 **SUN, passband='TESS', grid='invalid_grid')
-
+ 
     def test_grid_name_case_insensitive(self):
         r = meidem.get_ld_coefficients(
             **SUN, passband='TESS', grid='Kostogryz2022', law='power2')
         assert r['grid'] == 'kostogryz2022'
-
+ 
     def test_available_grids_returns_list(self):
         grids = meidem.available_grids(verbose=False)
         assert isinstance(grids, list)
@@ -286,23 +442,25 @@ class TestAPI:
         assert 'claret2022'    in grids
         assert 'claret2017'    in grids
         assert 'claret2011'    in grids
-
+        assert 'claret2025'    in grids  
+        assert 'magic2013'     in grids  
+ 
     def test_available_laws_returns_list(self):
         laws = meidem.available_laws('claret2017', verbose=False)
         assert isinstance(laws, list)
         assert 'quadratic' in laws
         assert '4coeff'    in laws
-
+ 
     def test_available_passbands_returns_list(self):
         pbs = meidem.available_passbands('claret2022', verbose=False)
         assert isinstance(pbs, list)
         assert 'TESS'   in pbs
         assert 'Gaia_G' in pbs
-
+ 
     def test_available_laws_invalid_grid_raises(self):
         with pytest.raises(ValueError):
             meidem.available_laws('invalid_grid')
-
+ 
     def test_available_passbands_invalid_grid_raises(self):
         with pytest.raises(ValueError):
             meidem.available_passbands('invalid_grid')
