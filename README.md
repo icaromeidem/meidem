@@ -296,7 +296,62 @@ r = meidem.get_ld_coefficients(
     xi=2.0,                 # set explicitly: 0, 1, 2, 4, or 8 km/s (ATLAS only)
 )
 ```
+---
 
+### 5. `claret2025` — Claret et al. (2025), A&A 699, A97
+
+**Reference:** Claret, A. et al. (2025), A&A 699, A97 — [doi:10.1051/0004-6361/202554578](https://doi.org/10.1051/0004-6361/202554578)
+
+**Atmospheric model:** PHOENIX (spherical symmetry, NewEra grid) — high spectral resolution (~10⁶ wavelengths, 0.1–6.0 μm). Solar abundance only, fixed ξ = 1.0 km/s.
+
+**Passbands:** JWST (F210M, F277W, F322W2, F444W, G235H, G235M, G395H, G395M, PRISM, SOSS1, SOSS2)
+
+**Laws available:** `power2`, `4coeff`
+
+**Microturbulence (xi):** Not applicable — this grid uses a fixed internal value.
+
+**When to use:** This is the **recommended grid for JWST photometry**. Covers the main NIRSpec and NIRISS/SOSS modes used in atmospheric characterization.
+
+```python
+r = meidem.get_ld_coefficients(
+    teff=5778, logg=4.44, feh=0.0,
+    passband='F277W',   # or 'PRISM', 'SOSS1', 'G395H', ...
+    grid='claret2025',
+    law='power2',       # or '4coeff'
+)
+```
+
+---
+
+### 6. `magic2013` — Magic et al. (2015), A&A 573, A90
+
+**Reference:** Magic, Z. et al. (2015), A&A 573, A90 — [doi:10.1051/0004-6361/201423804](https://doi.org/10.1051/0004-6361/201423804)
+
+**Atmospheric model:** 3D radiation-hydrodynamic (RHD) STAGGER-grid. No microturbulence parameter — xi is not applicable to 3D models.
+
+**Passbands:** Kepler, CoRoT, Bessell (H, J, K), Johnson (U, B, V, R, I, J, K), SDSS (u, g, r, i, z), Strömgren (u, v, b, y), MK (J, K, L, Lp, M), WFC3 grism
+
+**Grid limits:** Teff ≈ 3935–7053 K · logg ≈ 1.5–5.0 · [Fe/H] ≈ −3.0 to 0.0
+
+**Laws available:**
+
+| Law key | Coefficients |
+|---------|-------------|
+| `linear` | u |
+| `quadratic` | a, b |
+| `square-root` | c, d |
+| `4coeff` | a1, a2, a3, a4 |
+
+**When to use:** This grid is based on 3D RHD models, which are more physically realistic than 1D ATLAS/PHOENIX models — especially for FGK stars near the main sequence. Use it when you want to **compare 1D vs 3D predictions** or when working with Kepler data and want an independent cross-check. Note the limited [Fe/H] coverage (only down to −3.0) and the irregular grid coverage in 3D parameter space — points in sparse regions may fall in interpolation gaps.
+
+```python
+r = meidem.get_ld_coefficients(
+    teff=5778, logg=4.44, feh=0.0,
+    passband='Kepler',    # or 'SDSS_r', 'Johnson_V', 'Stromgren_y', ...
+    grid='magic2013',
+    law='quadratic',      # or 'linear', 'square-root', '4coeff'
+)
+```
 ---
 
 ## Choosing the Right Grid and Law
@@ -310,6 +365,9 @@ r = meidem.get_ld_coefficients(
 | Gaia, SDSS, Johnson, 2MASS passbands | `claret2022` |
 | Cool stars (Teff < 3500 K) with TESS | `claret2017` with `mod='P'` |
 | Comparing grids (e.g. for a paper) | `kostogryz2022` + `claret2022` |
+| JWST photometry | `claret2025` |
+| 3D RHD comparison / Kepler cross-check | `magic2013` |
+
 
 ### Which law?
 
@@ -341,19 +399,30 @@ Available values in the grids: **0, 1, 2, 4, 8** km/s.
 
 > **Note:** These are guidelines based on typical values in the literature. For precision work, determine xi from a spectroscopic analysis of your target star (e.g. by requiring no trend between Fe i line abundance and equivalent width).
 
-### Grid coverage and known limitations
+## Grid coverage and known limitations
 
-Each grid covers a finite region of stellar parameter space. Stars outside the grid raise a `ValueError` — MEIDEM **never extrapolates silently**.
+Each grid covers a finite region of stellar parameter space. Stars outside the grid raise a `ValueError` — MEIDEM never extrapolates silently.
 
-| Grid | Teff range (K) | ATLAS | PHOENIX |
-|------|---------------|-------|---------|
-| kostogryz2022 | ~3500–10000 | ✓ | — |
-| claret2022 | ~3500–50000 | ✓ | — |
-| claret2017 | ~3500–50000 / ~1500–12000 | ✓ | ✓ ([Fe/H]=0 only) |
-| claret2011 | ~3500–50000 / ~1500–12000 | ✓ | ✓ ([Fe/H]=0 only) |
+| Grid | Teff range (K) | logg range | [Fe/H] range | Model |
+|------|---------------|------------|--------------|-------|
+| `kostogryz2022` | 3500 – 10000 | 2.0 – 5.0 | −5.0 to +1.5 | MPS-ATLAS |
+| `claret2022` | 3500 – 50000 | 0.0 – 5.0 | −5.0 to +1.0 | ATLAS |
+| `claret2017` (ATLAS) | 3500 – 50000 | 0.0 – 5.0 | −5.0 to +1.0 | ATLAS |
+| `claret2017` (PHOENIX) | 2300 – 12000 | 2.5 – 6.0 | 0.0 only | PHOENIX |
+| `claret2011` (ATLAS) | 3500 – 50000 | 0.0 – 5.0 | −5.0 to +1.0 | ATLAS |
+| `claret2011` (PHOENIX) | 2300 – 12000 | 2.5 – 6.0 | 0.0 only | PHOENIX |
+| `claret2025` | 2400 – 7800 | 3.0 – 5.5 | solar only (ξ = 1 km/s fixed) | PHOENIX (spherical) |
+| `magic2013` | 3935 – 7053 | 1.5 – 5.0 | −3.0 to 0.0 | 3D RHD STAGGER |
 
-**Note for cool M dwarfs (Teff < 5000 K):** For stars cooler than about 5000 K, significant deviations between measured and theoretical LDCs (Δu₁, Δu₂ ≈ 0.2) have been observed in TESS light curves (Patel & Espinoza 2022). Treat results with extra caution for very cool stars.
+**Notes on specific grids:**
 
+- **`kostogryz2022`:** The MPS-ATLAS code cannot be used for Teff < 3500 K — mixing-length theory starts to fail for cool M dwarfs at 1D level. For these stars, use `claret2017` or `claret2011` with `mod='P'`.
+
+- **`claret2025`:** Based on spherically symmetric PHOENIX NewEra models computed at very high spectral resolution (~10⁶ wavelength points, 0.1–6.0 μm). Solar abundance only, fixed microturbulence ξ = 1.0 km/s. Covers only 11 JWST passbands (NIRCam, NIRISS, NIRSpec). Not suitable for optical photometry.
+
+- **`magic2013`:** Based on 3D RHD STAGGER-grid models — more physically realistic than 1D ATLAS/PHOENIX for FGK dwarfs near the main sequence, but with irregular coverage in parameter space. Points in sparse regions (particularly at low metallicity or extreme logg) may fall in interpolation gaps and raise `ValueError`. Limited to [Fe/H] ≥ −3.0 and Teff ≤ 7053 K.
+
+**Note for cool M dwarfs (Teff < 5000 K):** Significant deviations between measured and theoretical LDCs (Δu₁, Δu₂ ≈ 0.2) have been observed in TESS light curves for stars cooler than ~5000 K (Patel & Espinoza 2022). For very cool stars (Teff < 3500 K), no grid in MEIDEM provides reliable 1D predictions — 3D MHD simulations are needed (Bhatia et al. 2025). Treat results with extra caution for these objects.
 ---
 
 ## API Reference
@@ -430,6 +499,8 @@ If you use MEIDEM in your research, please cite the package and the grid(s) you 
 - Claret & Southworth (2022), A&A 664, A128 — [doi:10.1051/0004-6361/202244278](https://doi.org/10.1051/0004-6361/202244278)
 - Claret (2017), A&A 600, A30 — [doi:10.1051/0004-6361/201629705](https://doi.org/10.1051/0004-6361/201629705)
 - Claret & Bloemen (2011), A&A 529, A75 — [doi:10.1051/0004-6361/201116451](https://doi.org/10.1051/0004-6361/201116451)
+- Claret et al. (2025), A&A 699, A97 — [doi:10.1051/0004-6361/202554770](https://doi.org/10.1051/0004-6361/202554770)
+- Magic et al. (2015), A&A 573, A90 — [doi:10.1051/0004-6361/201423804](https://doi.org/10.1051/0004-6361/201423804)
 
 **Key references used in this documentation:**
 

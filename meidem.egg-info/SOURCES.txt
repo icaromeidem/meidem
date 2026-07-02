@@ -12,7 +12,9 @@ meidem/grids/__init__.py
 meidem/grids/claret2011.py
 meidem/grids/claret2017.py
 meidem/grids/claret2022.py
+meidem/grids/claret2025.py
 meidem/grids/kostogryz2022.py
+meidem/grids/magic2013.py
 meidem/tables/claret2011/table-af.parquet
 meidem/tables/claret2011/tableeq5.parquet
 meidem/tables/claret2011/tableu.parquet
@@ -31,5 +33,9 @@ meidem/tables/claret2017/tableu.parquet
 meidem/tables/claret2022/table1.parquet
 meidem/tables/claret2022/table2.parquet
 meidem/tables/claret2022/table3.parquet
+meidem/tables/claret2025/table2.parquet
+meidem/tables/claret2025/table3.parquet
 meidem/tables/kostogryz2022/table5.parquet
 meidem/tables/kostogryz2022/table6.parquet
+meidem/tables/magic2013/table1.parquet
+tests/test_meidem.py

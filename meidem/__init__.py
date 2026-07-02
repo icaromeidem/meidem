@@ -1,5 +1,5 @@
 """
-MEIDEM — Multi-grid Exoplanet Interpolator for limb DarkEning Models
+MEIDEM — Multi-grid Epic Interpolator for stellar limb DarkEning Models
 =====================================================================
 Unified public API for interpolating limb darkening coefficients
 from multiple published grids.
@@ -28,6 +28,26 @@ Supported grids
                     Passbands: Kepler (Kp), CoRoT (C), Spitzer (S1, S2)
                     Models: ATLAS (mod='A'), PHOENIX (mod='P')
 
+  'claret2025'    : Claret et al. 2025, A&A 699, A97
+                    Laws: 'power2', '4coeff'
+                    Passbands: JWST (F210M, F277W, F322W2, F444W, G235H,
+                                     G235M, G395H, G395M, PRISM, SOSS1, SOSS2)
+                    Models: ATLAS
+
+    'magic2013'   : Magic et al. (2015), A&A 573, A90
+                    Laws: 'linear', 'quadratic', 'square-root', '4coeff'
+                    Passbands: Kepler, CoRoT,
+                               Bessell_H/J/K,
+                               Johnson_U/B/V/R/I/J/K,
+                               SDSS_u/g/r/i/z,
+                               Stromgren_u/v/b/y,
+                               MK_J/K/L/Lp/M,
+                               WFC3_grism
+                    Model: 3D RHD STAGGER-grid (no xi)
+
+Quick start
+-----------
+# ... existing code ...
 Quick start
 -----------
 >>> import meidem
@@ -52,6 +72,9 @@ from .grids.kostogryz2022 import KostogryzGrid
 from .grids.claret2022    import Claret2022Grid
 from .grids.claret2017    import Claret2017Grid
 from .grids.claret2011    import Claret2011Grid
+from .grids.claret2025    import Claret2025Grid
+from .grids.magic2013     import Magic2013Grid
+
 
 __all__ = [
     '__version__',
@@ -108,6 +131,36 @@ _GRIDS = {
         'doi'       : '10.1051/0004-6361/201116451',
         'xi' : [0, 1, 2, 4, 8],
 
+    },
+    'claret2025': {
+    'class'     : Claret2025Grid,
+    'reference' : 'Claret et al. (2025), A&A 699, A97',
+    'model'     : 'ATLAS',
+    'laws'      : ['power2', '4coeff'],
+    'passbands' : ['F210M', 'F277W', 'F322W2', 'F444W',
+                   'G235H', 'G235M', 'G395H', 'G395M', 'PRISM',
+                   'SOSS1', 'SOSS2'],
+    'doi'       : '10.1051/0004-6361/202554578',
+    'xi'        : None,  
+    },
+
+    'magic2013': {
+        'class'     : Magic2013Grid,
+        'reference' : 'Magic et al. (2015), A&A 573, A90',
+        'model'     : '3D RHD STAGGER-grid',
+        'laws'      : ['linear', 'quadratic', 'square-root', '4coeff'],
+        'passbands' : [
+            'Kepler', 'CoRoT',
+            'Bessell_H', 'Bessell_J', 'Bessell_K',
+            'Johnson_U', 'Johnson_B', 'Johnson_V', 'Johnson_R', 'Johnson_I',
+            'Johnson_J', 'Johnson_K',
+            'SDSS_u', 'SDSS_g', 'SDSS_r', 'SDSS_i', 'SDSS_z',
+            'Stromgren_u', 'Stromgren_v', 'Stromgren_b', 'Stromgren_y',
+            'MK_J', 'MK_K', 'MK_L', 'MK_Lp', 'MK_M',
+            'WFC3_grism',
+        ],
+        'doi'       : '10.1051/0004-6361/201423804',
+        'xi'        : None,
     },
 }
 
@@ -265,7 +318,10 @@ def get_ld_coefficients(
             obj = InterpolatorClass(law=law, xi=xi, met=met, mod=mod, verbose=verbose)
         elif grid == 'claret2011':
             obj = InterpolatorClass(law=law, passband=passband, xi=xi, met=met, mod=mod, verbose=verbose)
-        
+        elif grid == 'claret2025': 
+            obj = InterpolatorClass(passband=passband, law=law, verbose=verbose)
+        elif grid == 'magic2013': 
+            obj = InterpolatorClass(passband=passband, law=law, verbose=verbose)
         _GRID_CACHE[cache_key] = obj
     else:
         pass
