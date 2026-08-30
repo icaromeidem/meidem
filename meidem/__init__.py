@@ -47,9 +47,6 @@ Supported grids
 
 Quick start
 -----------
-# ... existing code ...
-Quick start
------------
 >>> import meidem
 >>> result = meidem.get_ld_coefficients(
 ...     teff=5778, logg=4.44, feh=0.0,
