@@ -32,7 +32,7 @@ Supported grids
                     Laws: 'power2', '4coeff'
                     Passbands: JWST (F210M, F277W, F322W2, F444W, G235H,
                                      G235M, G395H, G395M, PRISM, SOSS1, SOSS2)
-                    Models: ATLAS
+                    Models: PHOENIX
 
     'magic2013'   : Magic et al. (2015), A&A 573, A90
                     Laws: 'linear', 'quadratic', 'square-root', '4coeff'
@@ -132,7 +132,7 @@ _GRIDS = {
     'claret2025': {
     'class'     : Claret2025Grid,
     'reference' : 'Claret et al. (2025), A&A 699, A97',
-    'model'     : 'ATLAS',
+    'model'     : 'PHOENIX',
     'laws'      : ['power2', '4coeff'],
     'passbands' : ['F210M', 'F277W', 'F322W2', 'F444W',
                    'G235H', 'G235M', 'G395H', 'G395M', 'PRISM',
