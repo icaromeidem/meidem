@@ -130,15 +130,15 @@ _GRIDS = {
 
     },
     'claret2025': {
-    'class'     : Claret2025Grid,
-    'reference' : 'Claret et al. (2025), A&A 699, A97',
-    'model'     : 'PHOENIX',
-    'laws'      : ['power2', '4coeff'],
-    'passbands' : ['F210M', 'F277W', 'F322W2', 'F444W',
-                   'G235H', 'G235M', 'G395H', 'G395M', 'PRISM',
-                   'SOSS1', 'SOSS2'],
-    'doi'       : '10.1051/0004-6361/202554578',
-    'xi'        : None,  
+        'class'     : Claret2025Grid,
+        'reference' : 'Claret et al. (2025), A&A 699, A97',
+        'model'     : 'PHOENIX',
+        'laws'      : ['power2', '4coeff'],
+        'passbands' : ['F210M', 'F277W', 'F322W2', 'F444W',
+                    'G235H', 'G235M', 'G395H', 'G395M', 'PRISM',
+                    'SOSS1', 'SOSS2'],
+        'doi'       : '10.1051/0004-6361/202554578',
+        'xi'        : None,  
     },
 
     'magic2013': {
