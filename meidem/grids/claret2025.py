@@ -1,32 +1,32 @@
-    """
-    meidem/grids/claret2025.py
-    ===========================
-    Limb darkening coefficient interpolator
-    Grid: Claret et al. (2025), A&A 699, A97 — JWST
+"""
+meidem/grids/claret2025.py
+===========================
+Limb darkening coefficient interpolator
+Grid: Claret et al. (2025), A&A 699, A97 — JWST
 
-    Tables (parquet):
-    table2.parquet — 4coeff law (nonlinear): a1, a2, a3, a4  (3366 rows)
-    table3.parquet — power-2 law: g, h                        (3366 rows)
+Tables (parquet):
+table2.parquet — 4coeff law (nonlinear): a1, a2, a3, a4  (3366 rows)
+table3.parquet — power-2 law: g, h                        (3366 rows)
 
-    Available JWST Instruments/Passbands:
-    NIRCam  : F210M, F277W, F322W2, F444W
-    NIRSpec : G235H, G235M, G395H, G395M, PRISM
-    NIRISS  : SOSS1, SOSS2
+Available JWST Instruments/Passbands:
+NIRCam  : F210M, F277W, F322W2, F444W
+NIRSpec : G235H, G235M, G395H, G395M, PRISM
+NIRISS  : SOSS1, SOSS2
 
-    Grid (PHOENIX, plane-parallel):
-    Teff  : 2400 – 50000 K
-    logg  : 3.0 – 5.5
-    [Fe/H]: not parametrized in this grid (fixed, solar)
+Grid (PHOENIX, plane-parallel):
+Teff  : 2400 – 50000 K
+logg  : 3.0 – 5.5
+[Fe/H]: not parametrized in this grid (fixed, solar)
 
-    Available laws:
-    '4coeff'  — I(μ)/I(1) = 1 − Σ aₙ(1 − μ^(n/2))   [table2]
-    'power2'  — I(μ)/I(1) = 1 − g(1 − μ^h)            [table3]
+Available laws:
+'4coeff'  — I(μ)/I(1) = 1 − Σ aₙ(1 − μ^(n/2))   [table2]
+'power2'  — I(μ)/I(1) = 1 − g(1 − μ^h)            [table3]
 
-    Reference:
-    Claret, A. et al. (2025)
-    A&A 699, A97
-    https://doi.org/10.1051/0004-6361/202554578
-    """
+Reference:
+Claret, A. et al. (2025)
+A&A 699, A97
+https://doi.org/10.1051/0004-6361/202554578
+"""
 
 import os
 import numpy as np
